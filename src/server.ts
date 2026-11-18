@@ -12,6 +12,29 @@ const browserDistFolder = join(import.meta.dirname, '../browser');
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
+// Record request metadata without query strings, headers or bodies.
+app.use((req, res, next) => {
+  const started = performance.now();
+  res.on('finish', () => {
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        event: 'http_request',
+        method: req.method,
+        path: req.path,
+        status: res.statusCode,
+        durationMs: Math.round(performance.now() - started),
+      }),
+    );
+  });
+  next();
+});
+
+app.get('/health', (_req, res) => {
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ status: 'ok', uptimeSeconds: Math.floor(process.uptime()) });
+});
+
 /**
  * Example Express Rest API endpoints can be defined here.
  * Uncomment and define endpoints as necessary.
@@ -41,9 +64,7 @@ app.use(
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
     .catch(next);
 });
 

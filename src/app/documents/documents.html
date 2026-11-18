@@ -1,0 +1,84 @@
+<section aria-labelledby="documents-title">
+  <h2 id="documents-title">My private documents</h2>
+  <p>PDF, PNG, JPEG, TXT or CSV. Maximum 10 MB per file.</p>
+  <form class="document-form" #form="ngForm" (ngSubmit)="save(fileInput)">
+    <label>Document title<input name="title" [(ngModel)]="title" required maxlength="120" /></label>
+    <label
+      >{{ editing() ? 'Replace file (optional)' : 'File'
+      }}<input
+        #fileInput
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg,.txt,.csv"
+        (change)="chooseFile($event)"
+        [required]="!editing()"
+    /></label>
+    <button type="submit" [disabled]="busy() || form.invalid || (!editing() && !file)">
+      {{ editing() ? 'Save document' : 'Upload document' }}
+    </button>
+    @if (editing()) {
+      <button type="button" (click)="cancel(fileInput)">Cancel edit</button>
+    }
+  </form>
+  <p role="status" class="feedback">{{ message() }}</p>
+  <button (click)="load()" [disabled]="busy()">Refresh documents</button>
+  <div class="table-scroll" [attr.aria-busy]="busy()">
+    <table>
+      <caption class="sr-only">
+        Your private documents
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col">Title</th>
+          <th scope="col">File</th>
+          <th scope="col">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (record of records(); track record.id) {
+          <tr>
+            <th scope="row">{{ record.title }}</th>
+            <td>{{ record.original_name }}</td>
+            <td>
+              <div class="actions">
+                <a
+                  [href]="'/api/documents/' + record.id + '/download'"
+                  [attr.aria-label]="'Download ' + record.title"
+                  >Download</a
+                >
+                <button
+                  (click)="edit(record)"
+                  [disabled]="busy()"
+                  [attr.aria-label]="'Edit ' + record.title"
+                >
+                  Edit
+                </button>
+                <button
+                  (click)="deleting.set(record)"
+                  [disabled]="busy()"
+                  [attr.aria-label]="'Delete ' + record.title"
+                >
+                  Delete
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="3">{{ busy() ? 'Loading documents...' : 'No documents on this page' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p>Page {{ page() }} of {{ lastPage() }}</p>
+  <button (click)="load(page() - 1)" [disabled]="busy() || page() <= 1">Previous</button>
+  <button (click)="load(page() + 1)" [disabled]="busy() || page() >= lastPage()">Next</button>
+  @if (deleting(); as record) {
+    <section aria-labelledby="delete-document-title">
+      <h3 id="delete-document-title">Delete {{ record.title }}?</h3>
+      <p>This permanently removes the document and its file.</p>
+      <button (click)="deleting.set(null)" [disabled]="busy()">Cancel</button>
+      <button (click)="remove()" [disabled]="busy()">Confirm delete</button>
+    </section>
+  }
+</section>

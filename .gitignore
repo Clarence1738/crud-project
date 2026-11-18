@@ -9,6 +9,7 @@
 # Node
 /node_modules
 npm-debug.log
+server.log
 yarn-error.log
 
 # IDEs and editors
