@@ -4,33 +4,79 @@ Angular 21 frontend with native Angular templates and HTML controls and Laravel 
 The existing transport register is retained. Private documents have their own CRUD
 screen. Records and files belong to individual accounts.
 
-## Local setup
+## Local setup on Windows
 
-Prerequisites: Node compatible with Angular 21, Composer, PHP 8.2+ (including
-fileinfo, mbstring, PDO and pdo_pgsql), and PostgreSQL. Laravel 12 was selected for
-the installed PHP 8.2 runtime. Do not bypass Composer platform requirements.
+Install Node.js 22.12+ (within the 22.x release line) or 24+, XAMPP with PHP 8.2+
+at `C:\xampp`, and PostgreSQL 18. Keep the password you set for the PostgreSQL
+administrator (`postgres`). During [Composer for Windows](https://getcomposer.org/download/)
+setup, select `C:\xampp\php\php.exe`, then open a new PowerShell terminal so it
+picks up Composer on your PATH.
 
-From this folder:
+### 1. Install dependencies and configure Laravel
 
-1. Run npm.cmd ci.
-2. In backend, run composer install. Copy .env.example to .env only if .env is
-   absent, then run php artisan key:generate.
-3. Create a dedicated PostgreSQL database and application role. Set DB_HOST,
-   DB_PORT, DB_DATABASE, DB_USERNAME and DB_PASSWORD in backend/.env.
-   The defaults are crud-project and crud_project_app. No database password is
-   supplied or committed. Use a separate test database for PostgreSQL tests.
-4. Run the commands below in PowerShell, with separate terminals for the servers:
+Run these commands from the project root (the folder containing `package.json`):
 
-   ./scripts/backend.ps1 migrate
-   ./scripts/backend.ps1 serve
-   npm.cmd start
+```powershell
+npm.cmd ci
+Set-Location backend
+composer install
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+if (Select-String -Path .env -Pattern '^APP_KEY=\s*$' -Quiet) {
+    & C:\xampp\php\php.exe artisan key:generate
+}
+Set-Location ..
+```
 
-Open http://localhost:4200 and create an account. Keep the same hostname throughout
-a session. The Angular dev proxy forwards /api to Laravel at 127.0.0.1:8000.
-The helper enables XAMPP's existing pdo_pgsql extension for its process; it does
-not edit your global PHP configuration. If pgsql is already enabled, remove the
-extra extension switch to avoid a duplicate-module warning. You can instead run
-ordinary Artisan commands using your configured PHP.
+If PowerShell blocks `npm.ps1`, use `npm.cmd` as shown. If `composer` is
+unrecognized, install Composer and reopen PowerShell. If Composer reports that
+ZIP support is missing, open `C:\xampp\php\php.ini`, uncomment `extension=zip`,
+and rerun `composer install` from `backend` before continuing.
+
+### 2. Set up PostgreSQL
+
+Check the PostgreSQL service with `Get-Service postgresql-x64-18`. If it is
+stopped, run `Start-Service postgresql-x64-18` in an administrator PowerShell.
+
+For a new database, run this command and paste its output after `DB_PASSWORD=`
+in `backend/.env`. Leave the other database settings at their defaults.
+
+```powershell
+& C:\xampp\php\php.exe -r "echo bin2hex(random_bytes(32)), PHP_EOL;"
+```
+
+From the project root, run the setup script and enter the PostgreSQL administrator
+password at the hidden prompt. The script creates the `crud-project` database
+and its `crud_project_app` role, then runs Laravel's migrations.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-database.ps1
+```
+
+If the database and role already exist, keep their existing credentials in
+`backend/.env` and run the migrations directly:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\backend.ps1 migrate
+```
+
+### 3. Start the app
+
+From the project root, start Laravel in one PowerShell window:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\backend.ps1 serve
+```
+
+Keep it open and start Angular in a second PowerShell window:
+
+```powershell
+npm.cmd start
+```
+
+Open **http://localhost:4200** and create an account. Angular forwards `/api`
+requests to Laravel at `http://127.0.0.1:8000`. The backend script loads XAMPP's
+`pdo_pgsql` extension for the PHP process. The execution policy flag applies
+only to the PowerShell process launched for each script.
 
 The old demo password and browser-storage login are removed. Existing localStorage
 transport data is not imported or deleted: ownership of that old shared data
@@ -102,5 +148,3 @@ Back up both PostgreSQL and private storage and test restores together. Restrict
 filesystem access, monitor failed requests/storage failures, and review dependency
 updates. A malware scanner, account recovery and email verification are not
 implemented. No production deployment has been performed.
-
-Local database provisioning: run ./scripts/setup-database.ps1. It prompts securely for the existing PostgreSQL administrator password, creates the application role and database, and runs migrations. The generated application password is stored only in ignored backend/.env. Existing databases and roles are not overwritten.

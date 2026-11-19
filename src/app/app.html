@@ -62,7 +62,7 @@
           }
           <button type="submit" class="primary" [disabled]="loginForm.invalid || busy()">
             {{
-              busy() ? 'Please waitâ€¦' : registering ? 'Create account' : 'Log in'
+              busy() ? 'Please wait¦' : registering ? 'Create account' : 'Log in'
             }}</button><button
             type="button"
             (click)="registering = !registering"
@@ -112,7 +112,7 @@
               ><span class="sr-only">Search transports</span
               ><input
                 type="search"
-                placeholder="Search customer, route, vehicleâ€¦"
+                placeholder="Search customer, route, vehicle¦"
                 [ngModel]="query()"
                 (ngModelChange)="query.set($event)" /></label
             ><label
@@ -223,7 +223,7 @@
                     <h3>
                       {{
                         !ready()
-                          ? 'Loading recordsâ€¦'
+                          ? 'Loading records¦'
                           : records().length
                             ? 'No matching transports'
                             : 'Your next journey starts here'
