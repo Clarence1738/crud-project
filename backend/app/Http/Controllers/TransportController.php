@@ -13,7 +13,7 @@ class TransportController extends Controller
 {
     public function index_transports(Request $request): JsonResponse
     {
-        return response()->json(Transport::where('user_id', $request->user()->id)->latest()->paginate(50));
+      return response()->json(Transport::where('user_id', $request->user()->id)->latest()->paginate(50));
     }
 
     public function store_transport(TransportRequest $request): JsonResponse

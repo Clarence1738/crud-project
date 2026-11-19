@@ -23,6 +23,16 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "dx.fluent.blue.light.css",
+                "input": "node_modules/devextreme/dist/css",
+                "output": "devextreme"
+              },
+              {
+                "glob": "dxiconsfluent.*",
+                "input": "node_modules/devextreme/dist/css/icons",
+                "output": "devextreme/icons"
               }
             ],
             "styles": ["src/styles.css"],
@@ -75,7 +85,8 @@
           }
         },
         "test": {
-          "builder": "@angular/build:unit-test"
+          "builder": "@angular/build:unit-test",
+          "options": { "runnerConfig": "vitest.config.ts" }
         }
       }
     }

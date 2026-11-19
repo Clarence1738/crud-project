@@ -53,7 +53,7 @@
                   Edit
                 </button>
                 <button
-                  (click)="deleting.set(record)"
+                  (click)="confirmDelete(record)"
                   [disabled]="busy()"
                   [attr.aria-label]="'Delete ' + record.title"
                 >
@@ -74,11 +74,28 @@
   <button (click)="load(page() - 1)" [disabled]="busy() || page() <= 1">Previous</button>
   <button (click)="load(page() + 1)" [disabled]="busy() || page() >= lastPage()">Next</button>
   @if (deleting(); as record) {
-    <section aria-labelledby="delete-document-title">
-      <h3 id="delete-document-title">Delete {{ record.title }}?</h3>
-      <p>This permanently removes the document and its file.</p>
-      <button (click)="deleting.set(null)" [disabled]="busy()">Cancel</button>
-      <button (click)="remove()" [disabled]="busy()">Confirm delete</button>
-    </section>
+    <dx-popup
+      title="Delete this document?"
+      [visible]="true"
+      (visibleChange)="!$event && deleting.set(null)"
+      (onHiding)="$any($event).cancel = busy()"
+      [showCloseButton]="!busy()"
+      width="calc(100% - 32px)"
+      [maxWidth]="460"
+      height="auto"
+    >
+      <div *dxTemplate="let content of 'content'">
+        <p>
+          This permanently removes <strong>{{ record.title }}</strong> and its file.
+        </p>
+        @if (message()) {
+          <p class="feedback" role="alert">{{ message() }}</p>
+        }
+        <div class="actions">
+          <dx-button text="Cancel" (onClick)="deleting.set(null)" [disabled]="busy()" />
+          <dx-button text="Confirm delete" type="danger" (onClick)="remove()" [disabled]="busy()" />
+        </div>
+      </div>
+    </dx-popup>
   }
 </section>

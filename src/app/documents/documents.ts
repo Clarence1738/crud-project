@@ -1,12 +1,15 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DxTemplateDirective } from 'devextreme-angular/core';
+import { DxButtonComponent } from 'devextreme-angular/ui/button';
+import { DxPopupComponent } from 'devextreme-angular/ui/popup';
 
 import { DocumentRecord, DocumentService } from './document.service';
 import { errorMessage } from '../api.service';
 
 @Component({
   selector: 'app-documents',
-  imports: [FormsModule],
+  imports: [FormsModule, DxTemplateDirective, DxButtonComponent, DxPopupComponent],
   templateUrl: './documents.html',
   styleUrl: './documents.css',
 })
@@ -76,6 +79,12 @@ export class Documents implements OnInit {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  confirmDelete(record: DocumentRecord): void {
+    if (this.busy()) return;
+    this.message.set('');
+    this.deleting.set(record);
   }
 
   async remove(): Promise<void> {

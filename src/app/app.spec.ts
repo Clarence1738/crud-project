@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { App } from './app';
 import { AuthService } from './auth.service';
 import { TransportService } from './transport.service';
@@ -20,6 +20,7 @@ describe('Transport API integration', () => {
     auth.restore.mockResolvedValue(undefined);
     service.list.mockResolvedValue({ data: [], current_page: 1, last_page: 1, total: 0 });
     await TestBed.configureTestingModule({
+      deferBlockBehavior: DeferBlockBehavior.Manual,
       imports: [App],
       providers: [
         { provide: AuthService, useValue: auth },
@@ -125,22 +126,89 @@ describe('Transport API integration', () => {
       },
     ]);
     fixture.detectChanges();
-    const button = fixture.nativeElement.querySelector(
-      'button[aria-label="Change status for Acme"]',
-    ) as HTMLButtonElement;
-    expect(button).toBeTruthy();
+    const [grid] = await fixture.getDeferBlocks();
+    await grid.render(DeferBlockState.Complete);
+    await fixture.whenStable();
+    const button = await vi.waitFor(() => {
+      fixture.detectChanges();
+      const action = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
+        'button[aria-label="Change status for Acme"]',
+      );
+      expect(action).toBeTruthy();
+      return action!;
+    });
     button.click();
     fixture.detectChanges();
-    const form = fixture.nativeElement.querySelector(
-      'form[aria-label="Change shipment status"]',
-    ) as HTMLFormElement;
-    expect(form).toBeTruthy();
-    expect(form.querySelectorAll('option')).toHaveLength(3);
-    expect(fixture.nativeElement.textContent).not.toContain('Stored privately on the server');
-    (form.querySelector('button[type="button"]') as HTMLButtonElement).click();
+    const form = await vi.waitFor(() => {
+      fixture.detectChanges();
+      const popupForm = document.querySelector<HTMLFormElement>(
+        'form[aria-label="Change shipment status"]',
+      );
+      expect(popupForm).toBeTruthy();
+      return popupForm!;
+    });
+    expect(form.closest('[role="dialog"]')).toBeTruthy();
+    expect(form.querySelector('#shipment-status')).toBeTruthy();
+    form.querySelector<HTMLElement>('[role="button"][aria-label="Cancel"]')!.click();
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('#shipment-status')).toBeNull();
+    expect(fixture.componentInstance.statusEditor()).toBeNull();
+    expect(document.querySelector('#shipment-status')).toBeNull();
   });
+  it('creates a transport through the popup and deletes only after confirmation', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    auth.user.set('alice@example.com');
+    fixture.detectChanges();
+    const [workspace] = await fixture.getDeferBlocks();
+    await workspace.render(DeferBlockState.Complete);
+
+    const draft = {
+      customer: 'Acme',
+      origin: 'Nairobi',
+      destination: 'Mombasa',
+      vehicle: 'KDA',
+      date: '2026-11-18',
+      status: 'Scheduled' as const,
+    };
+    const record = { id: 'one', ...draft };
+    const app = fixture.componentInstance;
+    const popupButton = (label: string) =>
+      vi.waitFor(() => {
+        fixture.detectChanges();
+        const button = document.querySelector<HTMLElement>(
+          `[role="dialog"] [role="button"][aria-label="${label}"]`,
+        );
+        expect(button).toBeTruthy();
+        return button!;
+      });
+
+    app.openEditor();
+    app.draft = draft;
+    service.save.mockResolvedValue(record);
+    const create = await popupButton('Create transport');
+    await fixture.whenStable();
+    fixture.detectChanges();
+    create.click();
+    await vi.waitFor(() => expect(service.save).toHaveBeenCalledWith(draft, null));
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(app.editorOpen()).toBe(false);
+
+    app.confirmDelete(record);
+    (await popupButton('Keep record')).click();
+    fixture.detectChanges();
+    expect(app.pendingDelete()).toBeNull();
+    expect(service.delete).not.toHaveBeenCalled();
+
+    app.confirmDelete(record);
+    service.delete.mockResolvedValue(undefined);
+    (await popupButton('Delete transport')).click();
+    await vi.waitFor(() => expect(service.delete).toHaveBeenCalledWith('one'));
+    await fixture.whenStable();
+    expect(app.pendingDelete()).toBeNull();
+  });
+
   it('blocks mutations when logged out', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();

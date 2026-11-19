@@ -1,4 +1,4 @@
-﻿:host {
+:host {
   display: block;
   color: #172b29;
   font-family: Arial, Helvetica, sans-serif;
@@ -189,29 +189,6 @@ h2 {
 .filters input {
   width: 280px;
 }
-.table-scroll {
-  overflow: auto;
-}
-table {
-  border-collapse: collapse;
-  width: 100%;
-  text-align: left;
-  white-space: nowrap;
-}
-th {
-  background: #f7f9f7;
-  color: #839086;
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 15px 24px;
-  border-block: 1px solid #e8eee9;
-}
-td {
-  padding: 20px 24px;
-  font-size: 13px;
-  border-bottom: 1px solid #edf0ed;
-}
 .record-link {
   padding: 0;
   border: 0;
@@ -248,28 +225,6 @@ td {
 .danger-link {
   color: #a74639;
 }
-.empty {
-  text-align: center;
-  padding: 48px 20px 55px;
-}
-.empty-icon {
-  display: inline-grid;
-  place-items: center;
-  font-size: 25px;
-  color: #438b6e;
-  background: #edf6ef;
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-}
-.empty h3 {
-  font-size: 16px;
-  margin: 18px 0 7px;
-}
-.empty p {
-  font-size: 12px;
-  margin: 0;
-}
 .records footer {
   padding: 17px 24px;
   display: flex;
@@ -283,18 +238,9 @@ td {
   text-align: center;
   margin: 20px;
 }
-.panel {
-  background: white;
-  border: 1px solid #dce7de;
-  border-radius: 10px;
-  padding: 26px;
-  margin-top: 24px;
-}
-.panel-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 22px;
+.transport-editor {
+  max-height: calc(90dvh - 90px);
+  overflow-y: auto;
 }
 .form-grid {
   display: grid;
@@ -314,21 +260,6 @@ td {
   gap: 10px;
   align-items: center;
   margin-top: 24px;
-}
-.form-footer span {
-  margin-right: auto;
-  color: #7c8c81;
-  font-size: 12px;
-}
-.danger {
-  background: #a93e34;
-  color: white;
-}
-.danger:hover {
-  background: #8b2f27;
-}
-.delete-panel {
-  border-color: #e8c7c0;
 }
 dl {
   display: grid;
@@ -396,22 +327,4 @@ dd {
   .form-footer {
     flex-wrap: wrap;
   }
-  .form-footer span {
-    width: 100%;
-  }
-  td,
-  th {
-    padding: 15px;
-  }
-  .panel {
-    padding: 18px;
-  }
-}
-
-.status-form {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  white-space: normal;
 }

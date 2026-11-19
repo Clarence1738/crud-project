@@ -1,5 +1,11 @@
 import { afterNextRender, Component, computed, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DxDataGridComponent, DxiDataGridColumnComponent } from 'devextreme-angular/ui/data-grid';
+import { DxTemplateDirective } from 'devextreme-angular/core';
+import { DxButtonComponent } from 'devextreme-angular/ui/button';
+import { DxPopupComponent } from 'devextreme-angular/ui/popup';
+import { DxSelectBoxComponent } from 'devextreme-angular/ui/select-box';
+import { DxTextBoxComponent } from 'devextreme-angular/ui/text-box';
 import { AuthService } from './auth.service';
 import { errorMessage } from './api.service';
 import { Documents } from './documents/documents';
@@ -7,7 +13,17 @@ import { emptyRecord, Status, TransportRecord, TransportService } from './transp
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule, Documents],
+  imports: [
+    FormsModule,
+    Documents,
+    DxDataGridComponent,
+    DxiDataGridColumnComponent,
+    DxTemplateDirective,
+    DxButtonComponent,
+    DxPopupComponent,
+    DxSelectBoxComponent,
+    DxTextBoxComponent,
+  ],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -195,6 +211,13 @@ export class App {
       this.busy.set(false);
     }
   }
+
+  confirmDelete(record: TransportRecord): void {
+    if (!this.auth.user() || this.busy()) return;
+    this.notice.set('');
+    this.pendingDelete.set(record);
+  }
+
   async deleteRecord(): Promise<void> {
     const record = this.pendingDelete();
     if (!this.auth.user() || !record || this.busy()) return;

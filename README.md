@@ -1,8 +1,12 @@
 # Nextrans secure CRUD
 
-Angular 21 frontend with native Angular templates and HTML controls and Laravel 12 backend, using PostgreSQL.
+Angular 21 frontend with a DevExtreme DataGrid for the transport register, a Laravel 12 backend, and PostgreSQL.
 The existing transport register is retained. Private documents have their own CRUD
 screen. Records and files belong to individual accounts.
+
+The transport grid, transport dialogs, and document delete confirmation use DevExtreme 26.1.
+During evaluation, DevExtreme can show a trial warning.
+Register a valid key for production use. [DevExtreme licensing](https://js.devexpress.com/Angular/Documentation/Guide/Common/Licensing/)
 
 ## Local setup on Windows
 

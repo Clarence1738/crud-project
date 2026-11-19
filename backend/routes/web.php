@@ -9,6 +9,7 @@ Route::prefix('api')->middleware('private.responses')->group(function (): void {
     Route::get('csrf', fn () => response()->json(['token' => csrf_token()]));
     Route::post('register', [AuthController::class, 'register_user'])->middleware('throttle:6,1');
     Route::post('login', [AuthController::class, 'login_user'])->middleware('throttle:login');
+    
     Route::middleware('auth')->group(function (): void {
         Route::get('me', [AuthController::class, 'show_authenticated_user']);
         Route::post('logout', [AuthController::class, 'logout_user']);
