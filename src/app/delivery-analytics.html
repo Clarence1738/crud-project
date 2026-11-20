@@ -1,0 +1,101 @@
+﻿<section class="delivery-dashboard" aria-label="Delivery metrics">
+  @if (error()) {
+    <div class="analytics-error">
+      <p role="alert">{{ error() }}</p>
+      <button type="button" (click)="retry()">Retry analytics</button>
+    </div>
+  }
+  @if (metrics(); as report) {
+    <div class="dashboard-scope">
+      <p>All dates · Your account</p>
+      <p>
+        <strong>{{ report.delivered | number }}</strong> delivered shipments
+      </p>
+    </div>
+
+    <div class="rate-grid">
+      @for (metric of rates(); track metric.label) {
+        <section class="rate-card" [class.coverage-card]="metric.coverage">
+          <div class="rate-copy">
+            <h3>{{ metric.label }}</h3>
+            <p>
+              <strong>{{ metric.count | number }} of {{ metric.total | number }}</strong>
+              {{ metric.unit }}
+            </p>
+            @if (metric.total > 0) {
+              <p>{{ metric.total - metric.count | number }} {{ metric.remainder }}</p>
+            } @else {
+              <p>{{ metric.empty }}</p>
+            }
+          </div>
+          <div
+            class="rate-ring"
+            [class.no-sample]="metric.rate === null"
+            [style.--rate]="(metric.rate ?? 0) * 100 + '%'"
+          >
+            <strong>{{ metric.rate === null ? '—' : (metric.rate | percent: '1.0-1') }}</strong>
+            @if (metric.rate === null) {
+              <span>No data</span>
+            }
+          </div>
+        </section>
+      }
+    </div>
+
+    <p class="coverage-note">
+      {{ report.on_time.missing_delivery_date | number }} missing a delivery date ·
+      {{ report.on_time.missing_promised_date | number }} dated deliveries missing a promised ETA.
+      Delivery dates use Nairobi time.
+    </p>
+
+    <section class="transit-card" aria-labelledby="transit-chart-title">
+      <div class="transit-heading">
+        <h3 id="transit-chart-title">Transit time in days</h3>
+        <p>
+          {{ report.transit.eligible | number }} included ·
+          {{ report.transit.excluded | number }} excluded
+        </p>
+      </div>
+      @if (report.transit.median_days !== null && report.transit.p90_days !== null) {
+        @let scale = transitScaleDays();
+        <dl class="transit-chart" aria-label="Median and 90th-percentile transit days">
+          @for (row of transitRows(); track row.label) {
+            <div class="transit-row" [class.percentile-row]="row.label === '90th percentile'">
+              <dt>{{ row.label }}</dt>
+              <dd>
+                <span class="transit-track" aria-hidden="true">
+                  <span [style.width.%]="(row.days / scale) * 100"></span>
+                </span>
+                <strong>{{ row.days | number: '1.0-2' }} d</strong>
+              </dd>
+            </div>
+          }
+        </dl>
+        <div class="transit-axis" aria-hidden="true">
+          <span>0 d</span><span>{{ scale / 2 | number: '1.0-1' }} d</span
+          ><span>{{ scale | number }} d</span>
+        </div>
+        <p class="transit-note">
+          Transit is counted in calendar days. Shipments delivered on their departure date count as
+          0 days.
+        </p>
+      } @else {
+        <p class="transit-empty">
+          Transit days appear once a shipment has a departure date and a recorded delivery date on
+          or after it.
+        </p>
+      }
+    </section>
+    <details class="metric-notes">
+      <summary>How these metrics are calculated</summary>
+      <p>
+        The on-time rate uses deliveries with a known delivery date and promised ETA. ETA coverage
+        uses all dated deliveries. Transit runs from the departure date to the day the shipment was
+        marked Delivered, using Nairobi dates. A reopened shipment counts again once it is marked
+        Delivered.
+      </p>
+    </details>
+  } @else if (!error()) {
+    <p class="dashboard-loading" role="status">Loading delivery analytics…</p>
+  }
+</section>

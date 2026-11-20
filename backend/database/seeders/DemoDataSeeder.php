@@ -46,10 +46,13 @@ class DemoDataSeeder extends Seeder
                     }
                     $record = new Transport([
                         'customer' => 'Sample Customer '.($index + 1),
+                        'sender_company' => 'Sample Sender '.($index + 1),
+                        'recipient_company' => 'Sample Recipient '.($index + 1),
                         'origin' => $origin,
                         'destination' => $destination,
                         'vehicle' => 'KDA '.($account + 1).($index + 1).'0A',
                         'date' => '2026-11-'.(18 + $index),
+                        'expected_arrival_date' => '2026-11-'.(19 + $index),
                         'status' => $status,
                     ]);
                     $record->id = $id;

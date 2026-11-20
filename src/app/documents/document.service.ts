@@ -13,16 +13,24 @@ export interface DocumentRecord {
 export class DocumentService {
   private readonly api = inject(ApiService);
 
-  list(page: number): Promise<Page<DocumentRecord>> {
-    return this.api.request('GET', 'documents?page=' + page);
+  list(page: number, transportId?: string): Promise<Page<DocumentRecord>> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (transportId) params.set('transport_id', transportId);
+    return this.api.request('GET', 'documents?' + params);
   }
 
-  async save(title: string, file: File | null, id: string | null): Promise<void> {
+  async save(
+    title: string,
+    file: File | null,
+    id: string | null,
+    transportId?: string,
+  ): Promise<void> {
     const data = new FormData();
     data.append('title', title);
     if (file) data.append('file', file);
     // PHP parses multipart uploads through POST; Laravel honors the method override.
     if (id) data.append('_method', 'PUT');
+    if (!id && transportId) data.append('transport_id', transportId);
     await this.api.request<ApiResponse<DocumentRecord>>(
       'POST',
       id ? 'documents/' + id : 'documents',

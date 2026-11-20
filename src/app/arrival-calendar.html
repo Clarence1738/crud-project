@@ -1,0 +1,16 @@
+<section class="arrival-calendar" aria-labelledby="arrival-calendar-title">
+  <h2 id="arrival-calendar-title">Expected arrivals</h2>
+  <p role="status">{{ calendarMessage() }}</p>
+  @defer (on immediate) {
+    <dx-scheduler
+      [dataSource]="calendarEvents()"
+      [views]="['month', 'week', 'day']"
+      currentView="month"
+      [currentDate]="calendarDate()"
+      (currentDateChange)="changeCalendarDate($event)"
+      (onAppointmentClick)="openCalendarShipment($event)"
+      [editing]="false"
+      [height]="540"
+    />
+  }
+</section>

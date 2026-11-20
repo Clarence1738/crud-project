@@ -19,6 +19,7 @@ class DocumentRequest extends FormRequest
             'file' => [$this->isMethod('POST') && ! $this->route('document') ? 'required' : 'sometimes', 'extensions:pdf,jpg,jpeg,png,txt,csv', File::types(['pdf', 'jpg', 'jpeg', 'png', 'txt', 'csv'])->max(10240)],
             'user_id' => ['prohibited'],
             'path' => ['prohibited'],
+            'transport_id' => [$this->route('document') ? 'prohibited' : 'nullable', 'uuid'],
         ];
     }
 }

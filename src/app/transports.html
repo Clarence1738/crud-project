@@ -1,0 +1,354 @@
+@defer (on immediate) {
+  <div [hidden]="detailsOpen()">
+    <div class="shipment-intro">
+      <p class="eyebrow">GOODS MOVEMENT</p>
+      <h1 #registerTitle tabindex="-1">Transport records</h1>
+      <p>Track outgoing shipments and incoming deliveries.</p>
+      <button class="primary" (click)="openEditor()" [disabled]="busy()">+ Add transport</button>
+      <button type="button" aria-haspopup="dialog" (click)="openPanel.set('calendar')">
+        Arrival calendar
+      </button>
+      <button
+        type="button"
+        aria-haspopup="dialog"
+        (click)="openPanel.set('analytics')"
+      >
+        Delivery analytics
+      </button>
+    </div>
+    <p class="notice" role="status" aria-live="polite">{{ notice() }}</p>
+
+    <section class="shipment-exceptions" aria-label="Delivery exceptions">
+      @for (item of exceptionOptions; track item.key) {
+        <button
+          type="button"
+          [class.primary]="exceptionFilter() === item.key"
+          [attr.aria-pressed]="exceptionFilter() === item.key"
+          [disabled]="busy()"
+          (click)="filterException(item.key)"
+        >
+          <span>{{ item.label }}</span>
+          <strong>{{ exceptions()[item.key] }}</strong>
+        </button>
+      }
+    </section>
+
+    <section class="records" aria-label="Transport records">
+      <div class="toolbar">
+        <div>
+          <h2>
+            Shipments <span class="count">{{ total() }}</span>
+          </h2>
+          <p>Search and filters apply across the register.</p>
+        </div>
+        <form class="filters" (ngSubmit)="search()">
+          <label
+            ><span class="sr-only">Search transports</span
+            ><input
+              type="search"
+              name="search"
+              maxlength="120"
+              placeholder="Company, route, goods, or reference"
+              [ngModel]="query()"
+              (ngModelChange)="query.set($event)" /></label
+          ><label
+            ><span class="sr-only">Filter by status</span
+            ><select
+              name="statusFilter"
+              [ngModel]="statusFilter()"
+              (ngModelChange)="changeStatusFilter($event)"
+              [disabled]="busy()"
+            >
+              <option value="">All statuses</option>
+              @for (status of statuses; track status) {
+                <option [value]="status">{{ status }}</option>
+              }
+            </select></label
+          >
+          <button type="submit" [disabled]="busy()">Search</button>
+        </form>
+      </div>
+
+      @defer (on viewport) {
+        <dx-data-grid
+          [dataSource]="records()"
+          width="100%"
+          keyExpr="id"
+          [paging]="{ enabled: false }"
+          [sorting]="{ mode: 'none' }"
+          [columnAutoWidth]="true"
+          [showRowLines]="true"
+          [rowAlternationEnabled]="true"
+          [allowColumnResizing]="true"
+          [showColumnLines]="false"
+          [noDataText]="
+            busy()
+              ? 'Loading transports…'
+              : appliedQuery() || statusFilter() || exceptionFilter()
+                ? 'No matching transports'
+                : 'No transports yet. Add a transport to get started.'
+          "
+          [elementAttr]="{ 'aria-label': 'Transport register' }"
+        >
+          <dxi-data-grid-column dataField="sender_company" caption="Sending company" />
+          <dxi-data-grid-column dataField="reference" caption="Reference" />
+          <dxi-data-grid-column
+            dataField="recipient_company"
+            caption="Receiving company"
+            cellTemplate="recipientCell"
+          />
+          <dxi-data-grid-column caption="Route" cellTemplate="routeCell" />
+          <dxi-data-grid-column dataField="vehicle" />
+          <dxi-data-grid-column dataField="date" caption="Departure" dataType="string" />
+          <dxi-data-grid-column
+            dataField="expected_arrival_date"
+            caption="Expected arrival"
+            dataType="string"
+          />
+          <dxi-data-grid-column dataField="status" cellTemplate="statusCell" />
+          <dxi-data-grid-column caption="Actions" cellTemplate="actionsCell" />
+
+          <div *dxTemplate="let cell of 'recipientCell'">
+            <button type="button" class="record-link" (click)="showDetails(cell.data.id)">
+              {{ cell.value }}
+            </button>
+          </div>
+          <div *dxTemplate="let cell of 'routeCell'">
+            {{ cell.data.origin }} <span class="arrow">&rarr;</span> {{ cell.data.destination }}
+          </div>
+          <div *dxTemplate="let cell of 'statusCell'">
+            <span
+              class="badge"
+              [class.transit]="cell.value === 'In transit'"
+              [class.delivered]="cell.value === 'Delivered'"
+              >{{ cell.value }}</span
+            >
+          </div>
+          <div *dxTemplate="let cell of 'actionsCell'" class="actions">
+            <button
+              type="button"
+              (click)="showDetails(cell.data.id)"
+              [disabled]="busy()"
+              [attr.aria-label]="'View details for ' + cell.data.recipient_company"
+            >
+              View details
+            </button>
+            <button
+              type="button"
+              (click)="openStatusEditor(cell.data)"
+              [disabled]="busy()"
+              [attr.aria-label]="'Change status for ' + cell.data.recipient_company"
+            >
+              Change status
+            </button>
+            <button
+              type="button"
+              (click)="openEditor(cell.data)"
+              [disabled]="busy()"
+              [attr.aria-label]="'Edit transport for ' + cell.data.recipient_company"
+            >
+              Edit
+            </button>
+            <button
+              type="button"
+              class="danger-link"
+              (click)="confirmDelete(cell.data)"
+              [disabled]="busy()"
+              [attr.aria-label]="'Delete transport for ' + cell.data.recipient_company"
+            >
+              Delete
+            </button>
+          </div>
+        </dx-data-grid>
+      } @placeholder {
+        <p class="deferred-panel" role="status">Shipment register loads when in view.</p>
+      } @loading (after 150ms) {
+        <p class="deferred-panel" role="status">Loading shipment register…</p>
+      } @error {
+        <p class="deferred-panel error" role="alert">
+          Could not load the shipment register. Refresh the page to retry.
+        </p>
+      }
+      <footer>
+        <span
+          >{{ records().length }} of {{ total() }} matching shipments · Page {{ page() }} of
+          {{ lastPage() }}</span
+        >
+        <div class="actions">
+          <dx-button
+            text="Previous"
+            (onClick)="loadRecords(page() - 1)"
+            [disabled]="busy() || page() <= 1"
+          />
+          <dx-button
+            text="Next"
+            (onClick)="loadRecords(page() + 1)"
+            [disabled]="busy() || page() >= lastPage()"
+          />
+          <dx-button text="Refresh" (onClick)="loadRecords(page())" [disabled]="busy()" />
+        </div>
+      </footer>
+    </section>
+
+    <section class="shipment-overview" aria-labelledby="shipment-overview-title">
+      <div>
+        <h2 id="shipment-overview-title">Shipment status</h2>
+        <p>Page {{ page() }} of {{ lastPage() }}</p>
+      </div>
+      @if (records().length) {
+        <div class="overview-content">
+          <div #chartViewport class="shipment-ring" aria-hidden="true">
+            @defer (on viewport(chartViewport); prefetch on idle) {
+              <dx-pie-chart
+                class="shipment-chart"
+                type="doughnut"
+                [dataSource]="statusCounts()"
+                [series]="{ argumentField: 'status', valueField: 'count' }"
+                [palette]="statusPalette"
+                [legend]="{ visible: false }"
+                [tooltip]="{ enabled: true }"
+                [size]="{ height: 142 }"
+                [innerRadius]="0.75"
+                [animation]="false"
+              />
+            }
+            <div class="ring-total">
+              <strong>{{ records().length }}</strong>
+              <span>{{ records().length === 1 ? 'Shipment' : 'Shipments' }}</span>
+            </div>
+          </div>
+          <dl class="status-summary">
+            @for (item of statusCounts(); track item.status; let index = $index) {
+              <div>
+                <dt>
+                  <span [style.backgroundColor]="statusPalette[index]"></span>{{ item.status }}
+                </dt>
+                <dd>{{ item.count }}</dd>
+              </div>
+            }
+          </dl>
+        </div>
+      } @else {
+        <p>
+          {{
+            busy() ? 'Loading shipment counts…' : 'Shipment counts appear after you add a record.'
+          }}
+        </p>
+      }
+    </section>
+  </div>
+  <router-outlet (activate)="detailsOpen.set(true)" (deactivate)="returnToRegister()" />
+  @if (openPanel(); as panel) {
+    <dx-popup
+      [title]="panel === 'calendar' ? 'Arrival calendar' : 'Delivery analytics'"
+      [visible]="true"
+      (visibleChange)="!$event && openPanel.set(null)"
+      [showCloseButton]="true"
+      width="calc(100% - 24px)"
+      [maxWidth]="panel === 'calendar' ? 1080 : 820"
+      height="auto"
+      maxHeight="90vh"
+    >
+      <div *dxTemplate="let content of 'content'" class="shipment-panel-content">
+        @if (panel === 'calendar') {
+          @defer (on immediate) {
+            <app-arrival-calendar
+              [revision]="calendarRevision()"
+              (openShipment)="openCalendarShipment($event)"
+            />
+          }
+        } @else {
+          @defer (on immediate) {
+            <app-delivery-analytics [revision]="calendarRevision()" />
+          }
+        }
+      </div>
+    </dx-popup>
+  }
+  @if (editorOpen()) {
+    <app-shipment-editor
+      [draft]="draft"
+      [editing]="editingId() !== null"
+      [busy]="busy()"
+      [message]="notice()"
+      [statuses]="statuses"
+      (saveShipment)="save()"
+      (dismiss)="editorOpen.set(false)"
+    />
+  }
+  @if (statusEditor(); as record) {
+    <dx-popup
+      title="Change shipment status"
+      [visible]="true"
+      (visibleChange)="!$event && statusEditor.set(null)"
+      (onHiding)="$any($event).cancel = busy()"
+      [showCloseButton]="!busy()"
+      width="calc(100% - 32px)"
+      [maxWidth]="440"
+      height="auto"
+    >
+      <form
+        *dxTemplate="let content of 'content'"
+        (ngSubmit)="saveStatus()"
+        aria-label="Change shipment status"
+      >
+        <label
+          >Status for {{ record.recipient_company }}
+          <dx-select-box
+            name="shipmentStatus"
+            [items]="statuses"
+            [(ngModel)]="statusDraft"
+            [disabled]="busy()"
+            [inputAttr]="{ id: 'shipment-status', 'aria-label': 'Shipment status' }"
+          />
+        </label>
+        @if (notice()) {
+          <p class="error" role="alert">{{ notice() }}</p>
+        }
+        <div class="form-footer">
+          <dx-button text="Cancel" (onClick)="statusEditor.set(null)" [disabled]="busy()" />
+          <dx-button
+            [text]="busy() ? 'Saving...' : 'Save status'"
+            type="default"
+            [useSubmitBehavior]="true"
+            [disabled]="busy() || statusDraft === record.status"
+          />
+        </div>
+      </form>
+    </dx-popup>
+  }
+  @if (pendingDelete(); as record) {
+    <dx-popup
+      title="Delete this transport?"
+      [visible]="true"
+      (visibleChange)="!$event && pendingDelete.set(null)"
+      (onHiding)="$any($event).cancel = busy()"
+      [showCloseButton]="!busy()"
+      width="calc(100% - 32px)"
+      [maxWidth]="460"
+      height="auto"
+    >
+      <div *dxTemplate="let content of 'content'">
+        <p>
+          The record for <strong>{{ record.recipient_company }}</strong> ({{ record.origin }} &rarr;
+          {{ record.destination }}) will be permanently removed.
+        </p>
+        <p>Its attachments will move to Private documents.</p>
+        @if (notice()) {
+          <p class="error" role="alert">{{ notice() }}</p>
+        }
+        <div class="form-footer">
+          <dx-button text="Keep record" (onClick)="pendingDelete.set(null)" [disabled]="busy()" />
+          <dx-button
+            text="Delete transport"
+            type="danger"
+            (onClick)="deleteRecord()"
+            [disabled]="busy()"
+          />
+        </div>
+      </div>
+    </dx-popup>
+  }
+} @placeholder {
+  <p>Loading transport grid…</p>
+}

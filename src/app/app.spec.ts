@@ -1,9 +1,13 @@
 import { DeferBlockBehavior, DeferBlockState, TestBed } from '@angular/core/testing';
 import { App } from './app';
 import { AuthService } from './auth.service';
+import { Transports } from './transports';
 import { TransportService } from './transport.service';
 import { DocumentService } from './documents/document.service';
 import { signal } from '@angular/core';
+import { provideRouter, Router } from '@angular/router';
+import { routes } from './app.routes';
+import { RecordRevisionsService } from './record-revisions.service';
 
 describe('Transport API integration', () => {
   const auth = {
@@ -13,18 +17,41 @@ describe('Transport API integration', () => {
     logout: vi.fn(),
   };
   const service = { list: vi.fn(), save: vi.fn(), delete: vi.fn(), updateStatus: vi.fn() };
+  const revisions = {
+    register: signal<string | null>(null),
+    transports: signal<string | null>(null),
+    documents: signal<string | null>(null),
+  };
 
   beforeEach(async () => {
     vi.resetAllMocks();
+    // jsdom has no canvas encoder. DevExtreme checks for one when creating a chart.
+    vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:,');
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
     auth.user.set(null);
+    revisions.register.set(null);
+    revisions.transports.set(null);
     auth.restore.mockResolvedValue(undefined);
     service.list.mockResolvedValue({ data: [], current_page: 1, last_page: 1, total: 0 });
     await TestBed.configureTestingModule({
       deferBlockBehavior: DeferBlockBehavior.Manual,
-      imports: [App],
+      imports: [App, Transports],
       providers: [
+        provideRouter(routes),
         { provide: AuthService, useValue: auth },
         { provide: TransportService, useValue: service },
+        {
+          provide: RecordRevisionsService,
+          useValue: revisions,
+        },
+
         {
           provide: DocumentService,
           useValue: {
@@ -35,20 +62,50 @@ describe('Transport API integration', () => {
     }).compileComponents();
   });
 
+  it('refreshes the current register page and filter when database records change', async () => {
+    auth.user.set('alice@example.com');
+    const fixture = TestBed.createComponent(Transports);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const register = fixture.componentInstance;
+    register.appliedQuery.set('Nairobi');
+    register.page.set(2);
+    service.list.mockResolvedValue({ data: [], current_page: 2, last_page: 3, total: 105 });
+    revisions.register.set('1:2026-11-20');
+    revisions.transports.set('1');
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(service.list).toHaveBeenLastCalledWith(2, {
+      search: 'Nairobi', status: '', exception: '',
+    });
+    expect(register.total()).toBe(105);
+    expect(register.calendarRevision()).toBe(1);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
   it('keeps failed edits open so the user can retry', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Transports);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
     auth.user.set('alice@example.com');
+
     const app = fixture.componentInstance;
     app.openEditor();
     app.draft = {
-      customer: 'Acme',
+      sender_company: 'Acme Export',
+      recipient_company: 'Coastal Retail',
       origin: 'Nairobi',
       destination: 'Mombasa',
-      vehicle: 'KDA',
-      date: '2026-11-18',
+      vehicle: 'KDA 123A',
+      date: '2026-11-19',
+      expected_arrival_date: '2026-11-20',
       status: 'Scheduled',
     };
     service.save.mockRejectedValueOnce(new Error('Offline'));
@@ -59,24 +116,33 @@ describe('Transport API integration', () => {
   });
 
   it('updates the displayed status only after the server confirms it', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Transports);
     fixture.detectChanges();
     await fixture.whenStable();
     auth.user.set('alice@example.com');
+
     const app = fixture.componentInstance;
     const record = {
       id: 'one',
-      customer: 'Acme',
+      sender_company: 'Acme Export',
+      recipient_company: 'Coastal Retail',
       origin: 'Nairobi',
       destination: 'Mombasa',
-      vehicle: 'KDA',
-      date: '2026-11-18',
+      vehicle: 'KDA 123A',
+      date: '2026-11-19',
+      expected_arrival_date: '2026-11-20',
       status: 'Scheduled' as const,
     };
     app.records.set([record]);
     app.openStatusEditor(record);
     app.statusDraft = 'Delivered';
     service.updateStatus.mockResolvedValueOnce({ ...record, status: 'Delivered' });
+    service.list.mockResolvedValueOnce({
+      data: [{ ...record, status: 'Delivered' }],
+      current_page: 1,
+      last_page: 1,
+      total: 1,
+    });
     await app.saveStatus();
     expect(service.updateStatus).toHaveBeenCalledWith('one', 'Delivered');
     expect(app.records()[0].status).toBe('Delivered');
@@ -85,18 +151,21 @@ describe('Transport API integration', () => {
   });
 
   it('preserves the old status and keeps the editor open if saving fails', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Transports);
     fixture.detectChanges();
     await fixture.whenStable();
     auth.user.set('alice@example.com');
+
     const app = fixture.componentInstance;
     const record = {
       id: 'one',
-      customer: 'Acme',
+      sender_company: 'Acme Export',
+      recipient_company: 'Coastal Retail',
       origin: 'Nairobi',
       destination: 'Mombasa',
-      vehicle: 'KDA',
-      date: '2026-11-18',
+      vehicle: 'KDA 123A',
+      date: '2026-11-19',
+      expected_arrival_date: '2026-11-20',
       status: 'Scheduled' as const,
     };
     app.records.set([record]);
@@ -109,30 +178,35 @@ describe('Transport API integration', () => {
     expect(app.notice()).toBeTruthy();
   });
   it('shows the status form when the user clicks Change status and cancels it', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Transports);
     fixture.detectChanges();
     await fixture.whenStable();
     auth.user.set('alice@example.com');
+
     fixture.detectChanges();
     fixture.componentInstance.records.set([
       {
         id: 'one',
-        customer: 'Acme',
+        sender_company: 'Acme Export',
+        recipient_company: 'Coastal Retail',
         origin: 'Nairobi',
         destination: 'Mombasa',
-        vehicle: 'KDA',
-        date: '2026-11-18',
+        vehicle: 'KDA 123A',
+        date: '2026-11-19',
+        expected_arrival_date: '2026-11-20',
         status: 'Scheduled',
       },
     ]);
     fixture.detectChanges();
-    const [grid] = await fixture.getDeferBlocks();
+    const [workspace] = await fixture.getDeferBlocks();
+    await workspace.render(DeferBlockState.Complete);
+    const [grid] = await workspace.getDeferBlocks();
     await grid.render(DeferBlockState.Complete);
     await fixture.whenStable();
     const button = await vi.waitFor(() => {
       fixture.detectChanges();
       const action = (fixture.nativeElement as HTMLElement).querySelector<HTMLButtonElement>(
-        'button[aria-label="Change status for Acme"]',
+        'button[aria-label="Change status for Coastal Retail"]',
       );
       expect(action).toBeTruthy();
       return action!;
@@ -155,20 +229,23 @@ describe('Transport API integration', () => {
     expect(document.querySelector('#shipment-status')).toBeNull();
   });
   it('creates a transport through the popup and deletes only after confirmation', async () => {
-    const fixture = TestBed.createComponent(App);
+    const fixture = TestBed.createComponent(Transports);
     fixture.detectChanges();
     await fixture.whenStable();
     auth.user.set('alice@example.com');
+
     fixture.detectChanges();
     const [workspace] = await fixture.getDeferBlocks();
     await workspace.render(DeferBlockState.Complete);
 
     const draft = {
-      customer: 'Acme',
+      sender_company: 'Acme Export',
+      recipient_company: 'Coastal Retail',
       origin: 'Nairobi',
       destination: 'Mombasa',
-      vehicle: 'KDA',
-      date: '2026-11-18',
+      vehicle: 'KDA 123A',
+      date: '2026-11-19',
+      expected_arrival_date: '2026-11-20',
       status: 'Scheduled' as const,
     };
     const record = { id: 'one', ...draft };
@@ -209,13 +286,30 @@ describe('Transport API integration', () => {
     expect(app.pendingDelete()).toBeNull();
   });
 
-  it('blocks mutations when logged out', async () => {
+  it('opens the transport workspace for a signed-in user', async () => {
+    auth.user.set('alice@example.com');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
-    await fixture.componentInstance.save();
-    await fixture.componentInstance.deleteRecord();
+    await TestBed.inject(Router).navigateByUrl('/');
+    const [workspace] = await fixture.getDeferBlocks();
+    await workspace.render(DeferBlockState.Complete);
+    await fixture.whenStable();
+    const [dashboard] = await workspace.getDeferBlocks();
+    await dashboard.render(DeferBlockState.Complete);
+    expect(fixture.nativeElement.querySelector('app-transports h1')?.textContent).toContain(
+      'Transport records',
+    );
+    expect(service.list).toHaveBeenCalledWith(1);
+  });
+
+  it('does not load the transport workspace for a guest', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(service.list).not.toHaveBeenCalled();
     expect(service.save).not.toHaveBeenCalled();
     expect(service.delete).not.toHaveBeenCalled();
     expect(fixture.nativeElement.querySelector('#login-title')).toBeTruthy();

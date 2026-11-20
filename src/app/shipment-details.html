@@ -1,0 +1,95 @@
+@if (loading()) {
+  <p role="status">Loading shipment details…</p>
+}
+@if (error()) {
+  <p class="error" role="alert">{{ error() }}</p>
+  <a class="record-link" routerLink="/">Back to shipments</a>
+}
+@if (record(); as record) {
+  <section class="shipment-details" aria-labelledby="shipment-detail-title">
+    <a class="record-link" routerLink="/">Back to shipments</a>
+    <div class="shipment-detail-header">
+      <div>
+        <h1 #detailTitle tabindex="-1" id="shipment-detail-title">Shipment details</h1>
+        <p>{{ record.origin }} &rarr; {{ record.destination }}</p>
+      </div>
+      <span
+        class="badge"
+        [class.transit]="record.status === 'In transit'"
+        [class.delivered]="record.status === 'Delivered'"
+      >
+        {{ record.status }}
+      </span>
+    </div>
+    <div class="shipment-detail-grid">
+      <section class="shipment-detail-card" aria-labelledby="shipment-route-title">
+        <h2 id="shipment-route-title">Companies and schedule</h2>
+        <dl>
+          <dt>Sending company</dt>
+          <dd>{{ record.sender_company || 'Not recorded' }}</dd>
+          <dt>Receiving company</dt>
+          <dd>{{ record.recipient_company }}</dd>
+          <dt>Vehicle</dt>
+          <dd>{{ record.vehicle }}</dd>
+          <dt>Departure</dt>
+          <dd>{{ record.date }}</dd>
+          <dt>Expected arrival</dt>
+          <dd>{{ record.expected_arrival_date || 'Not recorded' }}</dd>
+          <dt>Promised arrival</dt>
+          <dd>{{ record.promised_arrival_date || 'Not recorded' }}</dd>
+          <dt>Actual delivery</dt>
+          <dd>
+            {{
+              record.delivered_at
+                ? (record.delivered_at | date: 'MMM d, y' : '+0300')
+                : 'Not recorded'
+            }}
+          </dd>
+          <dt>{{ record.status === 'Delivered' ? 'Transit days' : 'Days since departure' }}</dt>
+          <dd>{{ record.transit_days ?? '?' }}</dd>
+        </dl>
+      </section>
+      <section class="shipment-detail-card" aria-labelledby="shipment-goods-title">
+        <h2 id="shipment-goods-title">Goods and reference</h2>
+        <dl>
+          <dt>Reference</dt>
+          <dd>{{ record.reference || 'Not recorded' }}</dd>
+          <dt>Goods</dt>
+          <dd>{{ record.goods_description || 'Not recorded' }}</dd>
+          <dt>Quantity</dt>
+          <dd>{{ record.quantity ?? 'Not recorded' }}</dd>
+          <dt>Record ID</dt>
+          <dd>{{ record.id }}</dd>
+        </dl>
+      </section>
+    </div>
+    <section class="shipment-detail-card" aria-labelledby="shipment-history-title">
+      <h2 id="shipment-history-title">Shipment history</h2>
+      @if (record.history.length) {
+        <ol class="shipment-history">
+          @for (event of record.history; track $index) {
+            <li>
+              <strong>{{ event.status }}</strong>
+              <time [attr.datetime]="event.changed_at">{{
+                event.changed_at | date: 'MMM d, y, h:mm a' : '+0300'
+              }}</time>
+            </li>
+          }
+        </ol>
+      } @else {
+        <p>No status changes recorded yet.</p>
+      }
+    </section>
+    @defer (on viewport) {
+      <app-documents [transportId]="record.id" />
+    } @placeholder {
+      <p class="deferred-panel" role="status">Shipment documents load when in view.</p>
+    } @loading (after 150ms) {
+      <p class="deferred-panel" role="status">Loading shipment documents…</p>
+    } @error {
+      <p class="deferred-panel error" role="alert">
+        Could not load shipment documents. Refresh the page to retry.
+      </p>
+    }
+  </section>
+}

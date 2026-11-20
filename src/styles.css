@@ -1,3 +1,9 @@
+@property --shipment-ring-sweep {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 360deg;
+}
+
 html,
 body {
   margin: 0;

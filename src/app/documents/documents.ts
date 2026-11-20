@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DxTemplateDirective } from 'devextreme-angular/core';
 import { DxButtonComponent } from 'devextreme-angular/ui/button';
@@ -6,6 +6,7 @@ import { DxPopupComponent } from 'devextreme-angular/ui/popup';
 
 import { DocumentRecord, DocumentService } from './document.service';
 import { errorMessage } from '../api.service';
+import { RecordRevisionsService } from '../record-revisions.service';
 
 @Component({
   selector: 'app-documents',
@@ -14,6 +15,7 @@ import { errorMessage } from '../api.service';
   styleUrl: './documents.css',
 })
 export class Documents implements OnInit {
+  readonly transportId = input<string>();
   private readonly service = inject(DocumentService);
   readonly records = signal<DocumentRecord[]>([]);
   readonly busy = signal(false);
@@ -25,22 +27,43 @@ export class Documents implements OnInit {
   title = '';
   file: File | null = null;
 
+  constructor() {
+    const revisions = inject(RecordRevisionsService);
+    let seen: string | null = null;
+    effect(() => {
+      const revision = revisions.documents();
+      if (this.busy() || revision === null || revision === seen) return;
+      seen = revision;
+      untracked(() => void this.load(this.page(), true));
+    });
+  }
+
   ngOnInit(): void {
     void this.load();
   }
 
-  async load(page = this.page()): Promise<void> {
-    this.busy.set(true);
-    this.message.set('');
+  private listRequest = 0;
+
+  async load(page = this.page(), background = false): Promise<void> {
+    const request = ++this.listRequest;
+    if (!background) {
+      this.busy.set(true);
+      this.message.set('');
+    }
     try {
-      const response = await this.service.list(page);
+      const response = await this.service.list(page, this.transportId());
+      if (request !== this.listRequest) return;
+      if (page > response.last_page && response.last_page > 0) {
+        await this.load(response.last_page, background);
+        return;
+      }
       this.records.set(response.data);
       this.page.set(response.current_page);
       this.lastPage.set(response.last_page);
     } catch (error) {
-      this.message.set(errorMessage(error));
+      if (!background && request === this.listRequest) this.message.set(errorMessage(error));
     } finally {
-      this.busy.set(false);
+      if (!background && request === this.listRequest) this.busy.set(false);
     }
   }
 
@@ -71,7 +94,12 @@ export class Documents implements OnInit {
     this.busy.set(true);
     this.message.set('');
     try {
-      await this.service.save(this.title.trim(), this.file, this.editing()?.id ?? null);
+      await this.service.save(
+        this.title.trim(),
+        this.file,
+        this.editing()?.id ?? null,
+        this.transportId(),
+      );
       this.cancel(input);
       await this.load(1);
     } catch (error) {

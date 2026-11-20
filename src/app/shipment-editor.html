@@ -1,0 +1,138 @@
+<dx-popup
+  [title]="editing() ? 'Edit transport' : 'Add transport'"
+  [visible]="true"
+  (visibleChange)="!$event && dismiss.emit()"
+  (onHiding)="$any($event).cancel = busy()"
+  [showCloseButton]="!busy()"
+  width="calc(100% - 32px)"
+  [maxWidth]="640"
+  height="auto"
+  maxHeight="90vh"
+>
+  <form
+    *dxTemplate="let content of 'content'"
+    class="transport-editor"
+    #transportForm="ngForm"
+    (ngSubmit)="saveShipment.emit()"
+  >
+    <div class="form-grid">
+      <label
+        >Vehicle registration
+        <dx-text-box
+          name="vehicle"
+          [(ngModel)]="draft().vehicle"
+          required
+          [maxLength]="30"
+          placeholder="e.g. KDA 123A"
+          [inputAttr]="{ 'aria-label': 'Vehicle registration' }"
+        />
+      </label>
+      <label
+        >Sending company
+        <dx-text-box
+          name="sender_company"
+          [(ngModel)]="draft().sender_company"
+          required
+          [maxLength]="120"
+          [inputAttr]="{ 'aria-label': 'Sending company' }"
+        />
+      </label>
+      <label
+        >Receiving company
+        <dx-text-box
+          name="recipient_company"
+          [(ngModel)]="draft().recipient_company"
+          required
+          [maxLength]="120"
+          [inputAttr]="{ 'aria-label': 'Receiving company' }"
+        />
+      </label>
+      <label
+        >Origin
+        <dx-text-box
+          name="origin"
+          [(ngModel)]="draft().origin"
+          required
+          [maxLength]="100"
+          placeholder="Departure location"
+          [inputAttr]="{ 'aria-label': 'Origin' }"
+        />
+      </label>
+      <label
+        >Destination
+        <dx-text-box
+          name="destination"
+          [(ngModel)]="draft().destination"
+          required
+          [maxLength]="100"
+          placeholder="Arrival location"
+          [inputAttr]="{ 'aria-label': 'Destination' }"
+        />
+      </label>
+      <label
+        >Departure date
+        <input type="date" name="date" [(ngModel)]="draft().date" required />
+      </label>
+      <label>
+        Shipment reference (optional)
+        <dx-text-box
+          name="reference"
+          [(ngModel)]="draft().reference"
+          [maxLength]="80"
+          [inputAttr]="{ 'aria-label': 'Shipment reference' }"
+        />
+      </label>
+      <label>
+        Goods description (optional)
+        <textarea
+          name="goods_description"
+          [(ngModel)]="draft().goods_description"
+          maxlength="500"
+          rows="2"
+        ></textarea>
+      </label>
+      <label>
+        Quantity (optional)
+        <input
+          type="number"
+          name="quantity"
+          [(ngModel)]="draft().quantity"
+          min="1"
+          max="2147483647"
+          step="1"
+        />
+      </label>
+      <label>
+        Expected arrival date (optional)
+        <input
+          type="date"
+          name="expected_arrival_date"
+          [(ngModel)]="draft().expected_arrival_date"
+          [attr.min]="draft().date || null"
+        />
+      </label>
+      <label
+        >Status
+        <dx-select-box
+          name="status"
+          [items]="statuses()"
+          [(ngModel)]="draft().status"
+          required
+          [inputAttr]="{ 'aria-label': 'Status' }"
+        />
+      </label>
+    </div>
+    @if (message()) {
+      <p class="error" role="alert">{{ message() }}</p>
+    }
+    <div class="form-footer">
+      <dx-button text="Cancel" (onClick)="dismiss.emit()" [disabled]="busy()" />
+      <dx-button
+        [text]="editing() ? 'Save changes' : 'Create transport'"
+        type="default"
+        [useSubmitBehavior]="true"
+        [disabled]="transportForm.invalid || busy()"
+      />
+    </div>
+  </form>
+</dx-popup>

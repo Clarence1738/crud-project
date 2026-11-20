@@ -1,0 +1,6 @@
+.arrival-calendar {
+  min-width: 0;
+}
+.arrival-calendar p:empty {
+  margin: 0;
+}

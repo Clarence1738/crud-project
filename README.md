@@ -1,7 +1,7 @@
-# Nextrans secure CRUD
+# Firm Management System
 
 Angular 21 frontend with a DevExtreme DataGrid for the transport register, a Laravel 12 backend, and PostgreSQL.
-The existing transport register is retained. Private documents have their own CRUD
+Private documents have their own CRUD
 screen. Records and files belong to individual accounts.
 
 The transport grid, transport dialogs, and document delete confirmation use DevExtreme 26.1.
@@ -116,9 +116,46 @@ POST /api/register and /api/login establish a session; GET /api/me returns the
 current user and POST /api/logout ends the session. Login/registration are rate
 limited. All data routes require authentication.
 
-GET/POST /api/transports and GET/PUT/DELETE /api/transports/{id} manage owned
-transport records. Lists are paginated (50 per page). Search, filters and summary
-counts currently apply to the displayed transport page.
+The workspace opens on **Transport** for incoming deliveries and outgoing shipments.
+Use **Due today**, **Overdue**, or **Missing ETA** to filter open shipments using the
+Nairobi business date. Search runs across the signed-in account before pagination.
+The status chart still summarizes the current page.
+GET/POST /api/transports and GET/PUT/DELETE /api/transports/{id} manage the signed-in user's
+transport records. The **Arrival calendar** shows expected arrival dates and opens
+shipment details when you select an entry. PATCH /api/transports/{id}/status updates
+the status. Shipment details show history recorded since the upgrade and the actual
+delivery timestamp for shipments marked delivered after the upgrade.
+Existing records are available in the Transport register.
+New and edited shipments require sending and receiving company names as well as their
+origin and destination locations. Older shipments show missing company names until edited.
+Shipment reference, goods description, quantity, and expected arrival date are optional.
+Select **View details** in the shipment grid to open `/shipments/{id}` and see its schedule,
+goods, status history, and documents. Use the browser Back button or **Back to shipments**
+to return to the register. Upload attachments from the details view. If a shipment is deleted, its
+attachments become general Private documents for the same account.
+
+## Code organization and scaling
+
+- Angular loads the register, shipment details, and private documents through routes.
+  Separate components own the shipment editor and arrival calendar.
+- Laravel's shipment module contains `TransportQueries` for account-scoped reads and
+  `TransportStatusService` for shipment writes and history in a single transaction.
+  The document module owns private file writes. HTTP controllers handle authorization,
+  validation, and response formatting.
+- GitHub Actions builds and tests Angular and runs the Laravel suites with SQLite and
+  a disposable PostgreSQL service.
+
+Run the PostgreSQL suite, benchmark, and restore check from the project root:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-postgres.ps1 -BenchmarkRows 5000 -VerifyRestore
+```
+
+This uses an isolated local PostgreSQL cluster. The benchmark measures register,
+reference search, and calendar queries and prints query plans. The restore check
+recreates document metadata and verifies the matching private file by checksum.
+For a real backup, take the database dump and the private-storage copy from the same
+consistent point and restore them to an isolated environment before relying on them.
 
 GET/POST /api/documents and GET/PUT/DELETE /api/documents/{id} manage documents.
 Uploads use multipart POST; updates use POST with _method=PUT for PHP multipart

@@ -1,0 +1,32 @@
+.shipment-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 20px;
+}
+.shipment-detail-header p {
+  margin: 4px 0 0;
+}
+.shipment-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.shipment-detail-card {
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid #e0e7e2;
+  border-radius: 10px;
+  background: white;
+}
+.shipment-history {
+  padding-inline-start: 24px;
+  line-height: 1.8;
+}
+.shipment-history time {
+  margin-inline-start: 8px;
+  color: #52675c;
+}

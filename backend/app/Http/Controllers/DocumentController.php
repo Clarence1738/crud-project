@@ -2,26 +2,40 @@
 
 namespace App\Http\Controllers;
 
+use App\Documents\DocumentFiles;
 use App\Http\Requests\DocumentRequest;
 use App\Models\Document;
+use App\Models\Transport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\Response;
 
 class DocumentController extends Controller
 {
+    public function __construct(private readonly DocumentFiles $files) {}
+
     public function index_documents(Request $request): JsonResponse
     {
-        return response()->json(Document::where('user_id', $request->user()->id)->latest()->paginate(50));
+        $filters = $request->validate(['transport_id' => ['nullable', 'uuid']]);
+        $transportId = $filters['transport_id'] ?? null;
+        if ($transportId !== null) {
+            Gate::authorize('view', Transport::findOrFail($transportId));
+        }
+
+        return response()->json(Document::where('user_id', $request->user()->id)
+            ->where('transport_id', $transportId)->latest()->paginate(50)->withQueryString());
     }
 
     public function store_document(DocumentRequest $request): JsonResponse
     {
         $document = new Document($request->safe()->only('title'));
         $document->user_id = $request->user()->id;
-        $this->save_document_file($request, $document);
+        if ($transportId = $request->validated('transport_id')) {
+            Gate::authorize('view', Transport::findOrFail($transportId));
+            $document->transport_id = $transportId;
+        }
+        $this->files->save($document, $request->file('file'));
 
         return response()->json(['data' => $document], 201);
     }
@@ -37,7 +51,7 @@ class DocumentController extends Controller
     {
         Gate::authorize('update', $document);
         $document->fill($request->safe()->only('title'));
-        $this->save_document_file($request, $document);
+        $this->files->save($document, $request->file('file'));
 
         return response()->json(['data' => $document]);
     }
@@ -45,48 +59,14 @@ class DocumentController extends Controller
     public function download_document(Document $document): Response
     {
         Gate::authorize('view', $document);
-        abort_unless(Storage::disk('private')->exists($document->path), 404);
-
-        return Storage::disk('private')->download($document->path, $document->original_name, [
-            'Content-Type' => 'application/octet-stream',
-            'Cache-Control' => 'private, no-store',
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return $this->files->download($document);
     }
 
     public function destroy_document(Document $document): Response
     {
         Gate::authorize('delete', $document);
-        // Delete bytes first: a storage failure leaves an authorized, retryable record.
-        Storage::disk('private')->delete($document->path);
-        $document->delete();
+        $this->files->delete($document);
 
         return response()->noContent();
-    }
-
-    private function save_document_file(DocumentRequest $request, Document $document): void
-    {
-        $oldPath = $document->path;
-        $newPath = null;
-        if ($file = $request->file('file')) {
-            $newPath = $file->store($document->user_id, 'private');
-            $document->path = $newPath;
-            $document->original_name = basename(str_replace('\\', '/', $file->getClientOriginalName()));
-            $document->mime_type = $file->getMimeType();
-            $document->size = $file->getSize();
-        }
-
-        try {
-            $document->save();
-        } catch (\Throwable $exception) {
-            if ($newPath) {
-                Storage::disk('private')->delete($newPath);
-            }
-            throw $exception;
-        }
-
-        if ($newPath && $oldPath) {
-            Storage::disk('private')->delete($oldPath);
-        }
     }
 }
