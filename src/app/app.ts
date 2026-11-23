@@ -25,7 +25,14 @@ export class App {
   readonly menuOpen = signal(false);
   readonly sections = [
     { label: 'Dashboard', icon: 'home', route: '/dashboard' },
-    { label: 'Shipments', icon: 'car', route: '/' },
+    { label: 'Farms', icon: 'home', route: '/farms' },
+    { label: 'Crops', icon: 'product', route: '/crops' },
+    { label: 'Livestock', icon: 'food', route: '/livestock' },
+    { label: 'Fields', icon: 'map', route: '/fields' },
+    { label: 'Inventory', icon: 'box', route: '/inventory' },
+    { label: 'Tasks', icon: 'checklist', route: '/tasks' },
+    { label: 'Equipment', icon: 'toolbox', route: '/equipment' },
+    { label: 'Finance', icon: 'money', route: '/finance' },
     { label: 'Documents', icon: 'file', route: '/documents' },
   ];
   private readonly router = inject(Router);
@@ -93,7 +100,15 @@ export class App {
   private sectionFor(url: string): number {
     const path = url.split(/[?#]/)[0];
     if (path === '/dashboard') return 0;
-    if (path === '/documents') return 2;
-    return 1;
+    if (path === '/farms') return 1;
+    if (path === '/crops') return 2;
+    if (path === '/livestock') return 3;
+    if (path === '/fields') return 4;
+    if (path === '/inventory') return 5;
+    if (path === '/tasks') return 6;
+    if (path === '/equipment') return 7;
+    if (path === '/finance') return 8;
+    if (path === '/documents') return 9;
+    return 0;
   }
 }

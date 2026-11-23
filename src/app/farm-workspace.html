@@ -1,0 +1,56 @@
+<section class="farm-page">
+  <header class="page-head">
+    <div><p class="eyebrow">FARM OPERATIONS</p><h1>{{ mode() === 'dashboard' ? 'Farm dashboard' : mode() === 'crops' ? 'Crop management' : mode() === 'livestock' ? 'Livestock management' : 'My farms' }}</h1><p>Manage crop and livestock operations in one workspace.</p></div>
+    <div class="farm-picker"><label>Active farm<select [ngModel]="activeFarm()?.id || ''" (ngModelChange)="selectFarm($event)"><option value="" disabled>Select a farm</option>@for(farm of farms();track farm.id){<option [value]="farm.id">{{farm.name}} · {{farm.county}}</option>}</select></label><button class="primary" (click)="openNewFarm()">+ Add farm</button></div>
+  </header>
+  @if(error()){<p class="error" role="alert">{{error()}}</p>}
+  @if(!busy() && !farms().length){<div class="empty"><h2>Create your first farm</h2><p>Add a farm to begin recording crops and livestock.</p><button class="primary" (click)="openNewFarm()">Add farm</button></div>}
+  @if(activeFarm();as farm){
+    @if(mode()==='dashboard'){
+      <div class="dashboard-welcome"><div><span class="dashboard-label">CURRENT FARM</span><h2>{{farm.name}}</h2><p>{{farm.location || farm.county}} · Operational overview</p></div><span class="farm-status"><i></i> Active farm</span></div>
+      <div class="stats">
+        <article><span class="stat-icon crop-icon dx-icon dx-icon-product"></span><div><span>Active crop seasons</span><strong>{{overview()?.active_crops||0}}</strong><small>Currently using land</small></div></article>
+        <article><span class="stat-icon animal-icon dx-icon dx-icon-food"></span><div><span>Livestock count</span><strong>{{overview()?.livestock||0}}</strong><small>Active animals and groups</small></div></article>
+        <article><span class="stat-icon records-icon dx-icon dx-icon-rowfield"></span><div><span>Crop records</span><strong>{{overview()?.crops||0}}</strong><small>All recorded seasons</small></div></article>
+        <article><span class="stat-icon land-icon dx-icon dx-icon-map"></span><div><span>Farm size</span><strong>{{farm.size_hectares||'—'}} <small>ha</small></strong><small>Registered land area</small></div></article>
+      </div>
+      <div class="panels">
+        <section class="land-panel">
+          <div class="panel-heading"><div><h2>Land utilization</h2><p>Active crop allocation in hectares</p></div><strong>{{overview()?.land?.used_percentage ?? 0}}%</strong></div>
+          @if((overview()?.land?.total_hectares||0)>0){
+            <dx-pie-chart type="doughnut" [dataSource]="landChart()" [series]="{argumentField:'label',valueField:'hectares'}" [palette]="landPalette" [legend]="{verticalAlignment:'bottom',horizontalAlignment:'center'}" [tooltip]="{enabled:true}" [innerRadius]="0.7" [size]="{height:290}"/>
+            <div class="land-totals">
+              <article class="used-land"><span>Used land</span><div><strong>{{overview()?.land?.used_hectares}}</strong><small>ha</small></div><p>Allocated to active crops</p></article>
+              <article class="available-land"><span>Available land</span><div><strong>{{overview()?.land?.remaining_hectares}}</strong><small>ha</small></div><p>Ready for allocation</p></article>
+              <article class="total-land"><span>Total farm area</span><div><strong>{{overview()?.land?.total_hectares}}</strong><small>ha</small></div><p>Registered farm size</p></article>
+            </div>
+            @if((overview()?.land?.overallocated_hectares||0)>0){<p class="land-warning">Crop allocations exceed the farm size by {{overview()?.land?.overallocated_hectares}} hectares.</p>}
+          }@else{<p>Add the farm size to calculate land utilization.</p>}
+        </section>
+        <section><h2>Livestock summary</h2>@for(item of overview()?.livestock_breakdown||[];track item.species){<div class="summary-row"><span>{{item.species}}</span><strong>{{item.count}}</strong></div>}@empty{<p>No livestock recorded yet.</p>}</section>
+      </div>
+    } @else if(mode()==='crops'){
+      <div class="toolbar"><div><h2>Crop seasons</h2><p>Maize, beans, potatoes and tomatoes.</p></div><button class="primary" (click)="form.set('crop')">+ Add crop season</button></div>
+      <dx-data-grid [dataSource]="crops()" keyExpr="id" [showBorders]="false" [rowAlternationEnabled]="true" [columnAutoWidth]="true" [filterRow]="{visible:true}" [headerFilter]="{visible:true}"><dxi-data-grid-column dataField="crop"/><dxi-data-grid-column dataField="variety"/><dxi-data-grid-column dataField="field_name" caption="Field"/><dxi-data-grid-column dataField="area_hectares" caption="Area (ha)"/><dxi-data-grid-column dataField="planted_on" caption="Planted"/><dxi-data-grid-column dataField="expected_harvest_date" caption="Expected harvest"/><dxi-data-grid-column dataField="status"/></dx-data-grid>
+    } @else if(mode()==='livestock'){
+      <div class="toolbar"><div><h2>Livestock records</h2><p>Individual animals and livestock groups.</p></div><button class="primary" (click)="form.set('livestock')">+ Add livestock</button></div>
+      <dx-data-grid [dataSource]="livestock()" keyExpr="id" [showBorders]="false" [rowAlternationEnabled]="true" [columnAutoWidth]="true" [filterRow]="{visible:true}"><dxi-data-grid-column dataField="tracking_type" caption="Tracking"/><dxi-data-grid-column dataField="tag_number" caption="Tag"/><dxi-data-grid-column dataField="group_name" caption="Group"/><dxi-data-grid-column dataField="species"/><dxi-data-grid-column dataField="breed"/><dxi-data-grid-column dataField="sex"/><dxi-data-grid-column dataField="quantity"/><dxi-data-grid-column dataField="status"/><dxi-data-grid-column dataField="location"/></dx-data-grid>
+    } @else {
+      <div class="farm-grid">
+        @for(item of farms();track item.id){
+          <article class="farm-card" [class.active]="item.id===farm.id">
+            <div class="farm-card-heading"><span class="farm-card-icon dx-icon dx-icon-home"></span>@if(item.id===farm.id){<span class="active-label">Active</span>}</div>
+            <div><h2>{{item.name}}</h2><p>{{item.location || item.county}}</p></div>
+            <dl><div><dt>County</dt><dd>{{item.county}}</dd></div><div><dt>Farm size</dt><dd>{{item.size_hectares||'—'}} ha</dd></div></dl>
+            <div class="farm-card-actions"><button [class.primary]="item.id!==farm.id" (click)="selectFarm(item.id)">{{item.id===farm.id?'Selected':'Select farm'}}</button><button (click)="editFarm(item)"><span class="dx-icon dx-icon-edit"></span> Edit details</button></div>
+          </article>
+        }
+      </div>
+    }
+  }
+</section>
+@if(form();as type){<div class="modal-backdrop" (click)="form.set(null)"><section class="modal" (click)="$event.stopPropagation()"><header><h2>{{type==='farm'?'Add farm':type==='crop'?'Add crop season':'Add livestock'}}</h2><button aria-label="Close" (click)="form.set(null)">×</button></header>
+  @if(type==='farm'){<form (ngSubmit)="saveFarm()"><label>Farm name<input name="farmName" [(ngModel)]="farmDraft.name" required></label><label>County<select name="county" [(ngModel)]="farmDraft.county"><option>Nakuru</option><option>Kiambu</option><option>Uasin Gishu</option><option>Nyeri</option><option>Meru</option><option>Machakos</option><option>Laikipia</option><option>Kakamega</option></select></label><label>Location<input name="location" [(ngModel)]="farmDraft.location" placeholder="Town, ward, or village"></label><label>Size in hectares<input type="number" name="size" [(ngModel)]="farmDraft.size_hectares" min="0" step=".01"></label><label class="form-wide">Farm notes<textarea name="farmNotes" [(ngModel)]="farmDraft.notes" rows="3" maxlength="2000" placeholder="Farm description or operational notes"></textarea></label><button class="primary" [disabled]="busy()">{{editingFarmId() ? 'Save changes' : 'Save farm'}}</button></form>}
+  @if(type==='crop'){<form (ngSubmit)="saveCrop()"><label>Crop<select name="crop" [(ngModel)]="cropDraft.crop"><option>Maize</option><option>Beans</option><option>Potatoes</option><option>Tomatoes</option></select></label><label>Variety<input name="variety" [(ngModel)]="cropDraft.variety"></label><label>Field or plot<select name="field" [(ngModel)]="cropDraft.field_id" required><option value="" disabled>Select a field</option>@for(field of fields();track field.id){<option [value]="field.id">{{field.name}} — {{field.size_hectares}} ha ({{field.status}})</option>}</select></label><label>Area (hectares)<input type="number" name="area" [(ngModel)]="cropDraft.area_hectares" required min=".01" step=".01"></label><label>Planting date<input type="date" name="planted" [(ngModel)]="cropDraft.planted_on"></label><label>Expected harvest<input type="date" name="harvest" [(ngModel)]="cropDraft.expected_harvest_date"></label><label>Status<select name="cropStatus" [(ngModel)]="cropDraft.status"><option>Planned</option><option>Active</option><option>Harvesting</option><option>Completed</option></select></label><label>Expected yield (kg)<input type="number" name="yield" [(ngModel)]="cropDraft.expected_yield_kg" min="0"></label><button class="primary" [disabled]="busy() || !fields().length">Save crop season</button>@if(!fields().length){<p class="form-hint">Create a field before adding a crop season.</p>}</form>}
+  @if(type==='livestock'){<form (ngSubmit)="saveLivestock()"><label>Tracking<select name="tracking" [(ngModel)]="livestockDraft.tracking_type"><option>Individual</option><option>Group</option></select></label>@if(livestockDraft.tracking_type==='Individual'){<label>Tag number<input name="tag" [(ngModel)]="livestockDraft.tag_number" required></label>}@else{<label>Group or flock name<input name="group" [(ngModel)]="livestockDraft.group_name" required></label>}<label>Species<select name="species" [(ngModel)]="livestockDraft.species"><option>Dairy cattle</option><option>Goats</option><option>Sheep</option><option>Poultry</option></select></label><label>Breed<input name="breed" [(ngModel)]="livestockDraft.breed"></label><label>Sex<select name="sex" [(ngModel)]="livestockDraft.sex"><option>Female</option><option>Male</option><option>Mixed</option></select></label><label>Quantity<input type="number" name="quantity" [(ngModel)]="livestockDraft.quantity" min="1" [disabled]="livestockDraft.tracking_type==='Individual'"></label><label>Location<input name="animalLocation" [(ngModel)]="livestockDraft.location"></label><button class="primary" [disabled]="busy()">Save livestock</button></form>}
+</section></div>}

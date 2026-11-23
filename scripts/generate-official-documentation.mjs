@@ -79,17 +79,16 @@ function addPage(title, subtitle = '') {
 
 const cover = pdf.addPage([width, height]);
 pages.push(cover);
-cover.drawText('FIRM MANAGEMENT SYSTEM', { x: margin, y: 610, size: 25, font: bold, color: black });
+cover.drawText('FARM MANAGEMENT SYSTEM', { x: margin, y: 610, size: 25, font: bold, color: black });
 cover.drawText('Project Documentation', { x: margin, y: 572, size: 19, font: regular, color: black });
 cover.drawLine({ start: { x: margin, y: 548 }, end: { x: width - margin, y: 548 }, thickness: 1, color: black });
-cover.drawText('Shipment Management Test Project', { x: margin, y: 516, size: 11, font: regular, color: black });
 cover.drawText('Technology: Angular, DevExtreme, Laravel and PostgreSQL', { x: margin, y: 430, size: 10, font: regular, color: black });
 cover.drawText('Document version: 1.0', { x: margin, y: 407, size: 10, font: regular, color: black });
 cover.drawText('Date: 23 November 2026', { x: margin, y: 384, size: 10, font: regular, color: black });
 
 const overview = addPage('1. Project Overview', 'Background, purpose, objectives and scope');
 overview.heading('1.1 Background');
-overview.paragraph('The Firm Management System was developed as a test project to demonstrate a complete CRUD application using a modern frontend, backend API and relational database. The selected business case is shipment management because firms regularly send and receive goods between companies and need clear records of those movements.');
+overview.paragraph('The Farm Management System was developed as a test project to demonstrate a complete CRUD application using a modern frontend, backend API and relational database. The selected business case is shipment management because firms regularly send and receive goods between companies and need clear records of those movements.');
 overview.heading('1.2 Problem statement');
 overview.paragraph('Manual or scattered shipment records make it difficult to find current information, identify delayed deliveries, keep supporting documents together and review delivery performance.');
 overview.heading('1.3 Project purpose');
@@ -201,7 +200,7 @@ pages.forEach((page, index) => {
   });
 });
 
-pdf.setTitle('Firm Management System - Project Documentation');
+pdf.setTitle('Farm Management System - Project Documentation');
 pdf.setSubject('Test project overview, technology, functions, security and testing');
 pdf.setAuthor('Firm Management System Project');
 pdf.setCreationDate(new Date('2026-11-23T00:00:00+03:00'));

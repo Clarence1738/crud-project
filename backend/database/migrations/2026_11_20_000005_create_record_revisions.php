@@ -18,7 +18,7 @@ return new class extends Migration
 
         if (DB::getDriverName() === 'pgsql') {
             DB::unprepared(<<<'SQL'
-                CREATE FUNCTION bump_record_revision() RETURNS trigger LANGUAGE plpgsql AS $$
+                CREATE OR REPLACE FUNCTION bump_record_revision() RETURNS trigger LANGUAGE plpgsql AS $$
                 BEGIN
                     IF TG_OP <> 'INSERT' THEN
                         INSERT INTO record_revisions VALUES (OLD.user_id, TG_TABLE_NAME, 1)

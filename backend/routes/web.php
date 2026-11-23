@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\FarmController;
+use App\Http\Controllers\FarmOperationsController;
 use App\Http\Controllers\TransportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,17 @@ Route::prefix('api')->middleware('private.responses')->group(function (): void {
             ]);
         });
         Route::post('logout', [AuthController::class, 'logout_user']);
+        Route::get('farms', [FarmController::class, 'index']);
+        Route::post('farms', [FarmController::class, 'store']);
+        Route::put('farms/{farm}', [FarmController::class, 'update']);
+        Route::get('farms/{farm}/overview', [FarmController::class, 'overview']);
+        Route::get('farms/{farm}/crops', [FarmController::class, 'crops']);
+        Route::post('farms/{farm}/crops', [FarmController::class, 'storeCrop']);
+        Route::get('farms/{farm}/livestock', [FarmController::class, 'livestock']);
+        Route::post('farms/{farm}/livestock', [FarmController::class, 'storeLivestock']);
+        Route::get('farms/{farm}/operations/{module}', [FarmOperationsController::class, 'index']);
+        Route::post('farms/{farm}/operations/{module}', [FarmOperationsController::class, 'store']);
+        Route::put('farms/{farm}/operations/{module}/{record}', [FarmOperationsController::class, 'update']);
         Route::get('transports', [TransportController::class, 'index_transports'])->name('transports.index');
         Route::get('transports/calendar', [TransportController::class, 'calendar']);
         Route::get('transports/analytics', [TransportController::class, 'analytics']);

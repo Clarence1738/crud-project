@@ -3,14 +3,14 @@
     <main class="boot-state"><div class="spinner"></div><p role="status">Loading workspace…</p></main>
   } @else if (!auth.user()) {
     <header class="public-header">
-      <a class="brand" href="/" aria-label="Firm Management home"><span class="mark">F</span><span>Firm Management<span class="brand-dot">.</span></span></a>
+      <a class="brand" href="/" aria-label="Farm Management home"><span class="mark">F</span><span>Farm Management<span class="brand-dot">.</span></span></a>
     </header>
     <main class="login-main">
       <section class="login-card" aria-labelledby="login-title">
         <div class="login-symbol"><span class="dx-icon dx-icon-car"></span></div>
         <p class="eyebrow">OPERATIONS PLATFORM</p>
         <h1 id="login-title">{{ registering ? 'Create your account' : 'Welcome back' }}</h1>
-        <p>{{ registering ? 'Set up your private operations workspace.' : 'Sign in to manage shipments, arrivals, and documents.' }}</p>
+        <p>{{ registering ? 'Set up your private farm workspace.' : 'Sign in to manage farms, crops, livestock, and documents.' }}</p>
         <form #loginForm="ngForm" (ngSubmit)="login()">
           @if (registering) { <label>Your name<input name="name" [(ngModel)]="name" required maxlength="120" autocomplete="name" /></label> }
           <label>Email address<input type="email" name="email" [(ngModel)]="email" required email autocomplete="username" placeholder="you@company.com" /></label>
@@ -28,9 +28,9 @@
   } @else {
     <div class="app-layout" [class.menu-open]="menuOpen()">
       <aside class="sidebar" aria-label="Main navigation">
-        <a class="brand sidebar-brand" href="/dashboard" aria-label="Firm Management dashboard">
+        <a class="brand sidebar-brand" href="/dashboard" aria-label="Farm Management dashboard">
           <span class="mark" aria-hidden="true">F</span>
-          <span class="brand-name">Firm Management<span class="brand-dot">.</span></span>
+          <span class="brand-name">Farm Management<span class="brand-dot">.</span></span>
         </a>
         <p class="nav-label">WORKSPACE</p>
         <nav>
@@ -46,7 +46,7 @@
       <div class="workspace-frame">
         <header class="topbar">
           <button class="menu-toggle" aria-label="Open navigation" (click)="menuOpen.set(true)"><span class="dx-icon dx-icon-menu"></span></button>
-          <div><p class="topbar-kicker">FIRM OPERATIONS</p><strong>{{ sections[section()].label }}</strong></div>
+          <div><p class="topbar-kicker">FARM OPERATIONS</p><strong>{{ sections[section()].label }}</strong></div>
           <div class="account-menu"><span class="avatar">{{ (auth.user() || 'U').charAt(0).toUpperCase() }}</span><span class="account">{{ auth.user() }}</span><button class="logout-button" (click)="logout()" [disabled]="busy()">Log out</button></div>
         </header>
         <main class="workspace-main">

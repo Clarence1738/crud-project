@@ -36,14 +36,20 @@
 .nav-item.active { color: white; background: #24785f; box-shadow: inset 3px 0 #65c4a4; }
 .sidebar-help { margin-top: auto; display: flex; gap: 11px; padding: 14px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #d6e5df; font-size: 12px; }
 .sidebar-help p { color: #9ebfb4; font-size: 11px; margin: 3px 0 0; }
-.workspace-frame { min-width: 0; }
+.workspace-frame { min-width: 0; display: grid; grid-template-rows: 72px minmax(0, 1fr); }
 .topbar { position: sticky; top: 0; z-index: 20; height: 72px; padding: 0 32px; border-bottom: 1px solid #dfe7e2; box-shadow: 0 2px 10px rgba(25,60,50,.04); }
 .topbar-kicker { margin: 0 0 2px; color: #7b9188; font-size: 9px; line-height: 1; letter-spacing: 1.4px; }
 .account-menu { margin-left: auto; display: flex; align-items: center; gap: 11px; }
 .account-menu .account { margin: 0; }
 .avatar { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; background: #e2f0ea; color: #176d56; }
 .logout-button { padding: 8px 12px; }
-.workspace-main { max-width: 1540px; padding: 34px 38px 60px; }
+.workspace-main {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  margin: 0;
+  padding: clamp(22px, 2.4vw, 38px) clamp(20px, 3vw, 48px) clamp(40px, 5vw, 72px);
+}
 .menu-toggle, .nav-scrim { display: none; }
 .public-header { padding-inline: 5%; }
 .login-symbol { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 22px; border-radius: 13px; background: #e4f2ed; color: #176d56; font-size: 20px; }
@@ -60,7 +66,11 @@
   .nav-scrim { display: block; position: fixed; inset: 0; z-index: 25; border: 0; border-radius: 0; background: rgba(9,31,25,.48); }
   .menu-toggle { display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; }
   .topbar { padding-inline: 20px; }
-  .workspace-main { padding: 26px 20px 48px; }
+  .workspace-main { padding: 22px 18px 44px; }
+}
+
+@media (min-width: 1800px) {
+  .workspace-main { padding-inline: clamp(48px, 4vw, 76px); }
 }
 * {
   box-sizing: border-box;

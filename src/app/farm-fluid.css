@@ -1,0 +1,61 @@
+:host {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  animation: page-in .28s ease-out;
+}
+
+.farm-page {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.page-head,
+.module-head {
+  gap: clamp(14px, 2vw, 28px);
+  margin-bottom: clamp(18px, 2vw, 26px);
+}
+
+.stats,
+.panels,
+.farm-grid {
+  gap: clamp(12px, 1.5vw, 20px);
+}
+
+.stats {
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
+}
+
+.farm-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+}
+
+.grid-card,
+.toolbar,
+.panels > section,
+.stats article,
+.farm-card {
+  min-width: 0;
+}
+
+.grid-card {
+  width: 100%;
+}
+
+@media (max-width: 700px) {
+  .page-head,
+  .module-head {
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .farm-picker,
+  .module-actions,
+  .farm-picker label,
+  .module-actions label,
+  .farm-picker select,
+  .module-actions select {
+    width: 100%;
+  }
+}

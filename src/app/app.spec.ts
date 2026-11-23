@@ -8,6 +8,7 @@ import { signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { routes } from './app.routes';
 import { RecordRevisionsService } from './record-revisions.service';
+import { FarmService } from './farm.service';
 
 describe('Transport API integration', () => {
   const auth = {
@@ -47,6 +48,15 @@ describe('Transport API integration', () => {
         provideRouter(routes),
         { provide: AuthService, useValue: auth },
         { provide: TransportService, useValue: service },
+        {
+          provide: FarmService,
+          useValue: {
+            farms: vi.fn().mockResolvedValue([]),
+            overview: vi.fn(),
+            crops: vi.fn(),
+            livestock: vi.fn(),
+          },
+        },
         {
           provide: RecordRevisionsService,
           useValue: revisions,
@@ -286,7 +296,7 @@ describe('Transport API integration', () => {
     expect(app.pendingDelete()).toBeNull();
   });
 
-  it('opens the transport workspace for a signed-in user', async () => {
+  it('opens the farm workspace for a signed-in user', async () => {
     auth.user.set('alice@example.com');
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
@@ -296,12 +306,9 @@ describe('Transport API integration', () => {
     const [workspace] = await fixture.getDeferBlocks();
     await workspace.render(DeferBlockState.Complete);
     await fixture.whenStable();
-    const [dashboard] = await workspace.getDeferBlocks();
-    await dashboard.render(DeferBlockState.Complete);
-    expect(fixture.nativeElement.querySelector('app-transports h1')?.textContent).toContain(
-      'Transport records',
+    expect(fixture.nativeElement.querySelector('app-farm-workspace h1')?.textContent).toContain(
+      'Farm dashboard',
     );
-    expect(service.list).toHaveBeenCalledWith(1);
   });
 
   it('does not load the transport workspace for a guest', async () => {

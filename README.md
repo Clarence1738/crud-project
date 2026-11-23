@@ -1,4 +1,4 @@
-# Firm Management System
+# Farm Management System
 
 Angular 21 firm-operations frontend with DevExtreme components, a Laravel 12
 backend, and PostgreSQL. The main workflow manages goods moving between sending
