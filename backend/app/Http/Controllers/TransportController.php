@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TransportController extends Controller
 {
@@ -46,6 +47,23 @@ class TransportController extends Controller
     public function analytics(Request $request, DeliveryAnalytics $analytics): JsonResponse
     {
         return response()->json(['data' => $analytics->forAccount($request->user()->id)]);
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $rows = Transport::where('user_id', $request->user()->id)
+            ->whereNull('archived_at')->latest()->get();
+
+        return response()->streamDownload(function () use ($rows): void {
+            $output = fopen('php://output', 'w');
+            fputcsv($output, ['Reference', 'Sending company', 'Receiving company', 'Origin', 'Destination', 'Vehicle', 'Driver', 'Departure', 'Expected arrival', 'Status', 'Goods', 'Quantity']);
+            foreach ($rows as $row) {
+                fputcsv($output, [$row->reference, $row->sender_company, $row->recipient_company, $row->origin, $row->destination, $row->vehicle, $row->driver_name, $row->date, $row->expected_arrival_date, $row->status, $row->goods_description, $row->quantity]);
+            }
+            fclose($output);
+        }, 'shipments-'.now('Africa/Nairobi')->format('Y-m-d').'.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 
     public function store_transport(TransportRequest $request): JsonResponse
@@ -96,7 +114,7 @@ class TransportController extends Controller
     public function destroy_transport(Transport $transport): Response
     {
         Gate::authorize('delete', $transport);
-        $transport->delete();
+        $transport->forceFill(['archived_at' => now()])->save();
 
         return response()->noContent();
     }

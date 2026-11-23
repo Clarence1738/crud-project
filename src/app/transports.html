@@ -3,18 +3,19 @@
     <div class="shipment-intro">
       <p class="eyebrow">GOODS MOVEMENT</p>
       <h1 #registerTitle tabindex="-1">Transport records</h1>
-      <p>Track outgoing shipments and incoming deliveries.</p>
-      <button class="primary" (click)="openEditor()" [disabled]="busy()">+ Add transport</button>
+      <p>Track outgoing shipments, incoming deliveries, schedules, and exceptions.</p>
+      <button class="primary" (click)="openEditor()" [disabled]="busy()"><span class="dx-icon dx-icon-plus"></span> Add transport</button>
       <button type="button" aria-haspopup="dialog" (click)="openPanel.set('calendar')">
-        Arrival calendar
+        <span class="dx-icon dx-icon-event"></span> Arrival calendar
       </button>
       <button
         type="button"
         aria-haspopup="dialog"
         (click)="openPanel.set('analytics')"
       >
-        Delivery analytics
+        <span class="dx-icon dx-icon-chart"></span> Delivery analytics
       </button>
+      <a class="button-link" href="/api/transports/export"><span class="dx-icon dx-icon-export"></span> Export CSV</a>
     </div>
     <p class="notice" role="status" aria-live="polite">{{ notice() }}</p>
 
@@ -77,9 +78,19 @@
           [paging]="{ enabled: false }"
           [sorting]="{ mode: 'none' }"
           [columnAutoWidth]="true"
+          [columnMinWidth]="110"
           [showRowLines]="true"
           [rowAlternationEnabled]="true"
+          [hoverStateEnabled]="true"
           [allowColumnResizing]="true"
+          [allowColumnReordering]="true"
+          [filterRow]="{ visible: true, applyFilter: 'auto' }"
+          [headerFilter]="{ visible: true }"
+          [columnChooser]="{ enabled: true, mode: 'select' }"
+          [groupPanel]="{
+            visible: true,
+            emptyPanelText: 'Drag a column here to group shipments',
+          }"
           [showColumnLines]="false"
           [noDataText]="
             busy()
@@ -319,7 +330,7 @@
   }
   @if (pendingDelete(); as record) {
     <dx-popup
-      title="Delete this transport?"
+      title="Archive this transport?"
       [visible]="true"
       (visibleChange)="!$event && pendingDelete.set(null)"
       (onHiding)="$any($event).cancel = busy()"
@@ -331,16 +342,16 @@
       <div *dxTemplate="let content of 'content'">
         <p>
           The record for <strong>{{ record.recipient_company }}</strong> ({{ record.origin }} &rarr;
-          {{ record.destination }}) will be permanently removed.
+          {{ record.destination }}) will be moved out of the active register.
         </p>
-        <p>Its attachments will move to Private documents.</p>
+        <p>Its shipment details and attachments will be preserved.</p>
         @if (notice()) {
           <p class="error" role="alert">{{ notice() }}</p>
         }
         <div class="form-footer">
           <dx-button text="Keep record" (onClick)="pendingDelete.set(null)" [disabled]="busy()" />
           <dx-button
-            text="Delete transport"
+            text="Archive transport"
             type="danger"
             (onClick)="deleteRecord()"
             [disabled]="busy()"

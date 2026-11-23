@@ -218,6 +218,23 @@
 .analytics-error p {
   margin-top: 0;
 }
+.retry-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  border: 1px solid #d7a39c;
+  border-radius: 8px;
+  padding: 8px 13px;
+  background: #fff;
+  color: #8f382b;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.retry-button:hover { background: #fff7f5; border-color: #b9675c; }
+.retry-button:focus-visible { outline: 3px solid #e3a299; outline-offset: 2px; }
 
 .dashboard-loading {
   color: var(--metric-muted);

@@ -280,7 +280,7 @@ describe('Transport API integration', () => {
 
     app.confirmDelete(record);
     service.delete.mockResolvedValue(undefined);
-    (await popupButton('Delete transport')).click();
+    (await popupButton('Archive transport')).click();
     await vi.waitFor(() => expect(service.delete).toHaveBeenCalledWith('one'));
     await fixture.whenStable();
     expect(app.pendingDelete()).toBeNull();

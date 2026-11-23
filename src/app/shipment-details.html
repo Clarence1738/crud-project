@@ -20,7 +20,25 @@
       >
         {{ record.status }}
       </span>
+      <button type="button" class="print-button" (click)="print()">
+        <span class="dx-icon dx-icon-print"></span> Print summary
+      </button>
     </div>
+    <ol class="shipment-progress" aria-label="Shipment progress">
+      <li class="complete"><span class="dx-icon dx-icon-check"></span><strong>Scheduled</strong></li>
+      <li
+        [class.complete]="record.status === 'In transit' || record.status === 'Delivered'"
+        [class.current]="record.status === 'In transit'"
+      >
+        <span class="dx-icon dx-icon-car"></span><strong>In transit</strong>
+      </li>
+      <li
+        [class.complete]="record.status === 'Delivered'"
+        [class.current]="record.status === 'Delivered'"
+      >
+        <span class="dx-icon dx-icon-check"></span><strong>Delivered</strong>
+      </li>
+    </ol>
     <div class="shipment-detail-grid">
       <section class="shipment-detail-card" aria-labelledby="shipment-route-title">
         <h2 id="shipment-route-title">Companies and schedule</h2>
@@ -31,6 +49,10 @@
           <dd>{{ record.recipient_company }}</dd>
           <dt>Vehicle</dt>
           <dd>{{ record.vehicle }}</dd>
+          <dt>Driver</dt>
+          <dd>{{ record.driver_name || 'Not recorded' }}</dd>
+          <dt>Driver phone</dt>
+          <dd>{{ record.driver_phone || 'Not recorded' }}</dd>
           <dt>Departure</dt>
           <dd>{{ record.date }}</dd>
           <dt>Expected arrival</dt>
@@ -60,6 +82,8 @@
           <dd>{{ record.quantity ?? 'Not recorded' }}</dd>
           <dt>Record ID</dt>
           <dd>{{ record.id }}</dd>
+          <dt>Internal notes</dt>
+          <dd>{{ record.notes || 'No notes recorded' }}</dd>
         </dl>
       </section>
     </div>

@@ -12,7 +12,7 @@ class TransportQueries
     public function page(int $userId, array $filters): array
     {
         $today = now('Africa/Nairobi')->toDateString();
-        $owned = Transport::where('user_id', $userId);
+        $owned = Transport::where('user_id', $userId)->whereNull('archived_at');
         $counts = (clone $owned)->where('status', '!=', 'Delivered')->toBase()
             ->selectRaw('COUNT(CASE WHEN expected_arrival_date = ? THEN 1 END) AS due_today,
                 COUNT(CASE WHEN expected_arrival_date < ? THEN 1 END) AS overdue,
@@ -52,6 +52,7 @@ class TransportQueries
     public function calendar(int $userId, string $start, string $end): Collection
     {
         return Transport::where('user_id', $userId)
+            ->whereNull('archived_at')
             ->whereBetween('expected_arrival_date', [$start, $end])
             ->orderBy('expected_arrival_date')->orderBy('id')
             ->get(['id', 'customer', 'recipient_company', 'reference', 'expected_arrival_date', 'status']);

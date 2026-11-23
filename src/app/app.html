@@ -1,96 +1,59 @@
 <div class="shell">
-  <header>
-    <a class="brand" href="/" aria-label="Firm Management home"
-      ><span class="mark">F</span> Firm Management<span class="brand-dot">.</span></a
-    ><span class="workspace">Operati  ons workspace</span>
-    @if (auth.user()) {
-      <span class="account">{{ auth.user() }}</span><button (click)="logout()">Log out</button>
-    }
-  </header>
   @if (!ready()) {
-    <main><p role="status">Loading workspace...</p></main>
+    <main class="boot-state"><div class="spinner"></div><p role="status">Loading workspace…</p></main>
   } @else if (!auth.user()) {
+    <header class="public-header">
+      <a class="brand" href="/" aria-label="Firm Management home"><span class="mark">F</span><span>Firm Management<span class="brand-dot">.</span></span></a>
+    </header>
     <main class="login-main">
       <section class="login-card" aria-labelledby="login-title">
-        <p class="eyebrow">FIRM MANAGEMENT</p>
-        <h1 id="login-title">
-          {{ registering ? 'Create your account' : 'Log in to your workspace' }}
-        </h1>
-        <p>Manage your firm records in one place.</p>
+        <div class="login-symbol"><span class="dx-icon dx-icon-car"></span></div>
+        <p class="eyebrow">OPERATIONS PLATFORM</p>
+        <h1 id="login-title">{{ registering ? 'Create your account' : 'Welcome back' }}</h1>
+        <p>{{ registering ? 'Set up your private operations workspace.' : 'Sign in to manage shipments, arrivals, and documents.' }}</p>
         <form #loginForm="ngForm" (ngSubmit)="login()">
+          @if (registering) { <label>Your name<input name="name" [(ngModel)]="name" required maxlength="120" autocomplete="name" /></label> }
+          <label>Email address<input type="email" name="email" [(ngModel)]="email" required email autocomplete="username" placeholder="you@company.com" /></label>
+          <label>Password<input type="password" name="password" [(ngModel)]="password" required [autocomplete]="registering ? 'new-password' : 'current-password'" /></label>
           @if (registering) {
-            <label
-              >Your name<input
-                name="name"
-                [(ngModel)]="name"
-                required
-                maxlength="120"
-                autocomplete="name"
-            /></label>
+            <label>Confirm password<input type="password" name="confirmation" [(ngModel)]="confirmation" required autocomplete="new-password" /></label>
+            <p class="field-help">Use at least 12 characters with uppercase, lowercase, a number and a symbol.</p>
           }
-          <label
-            >Email address<input
-              type="email"
-              name="email"
-              [(ngModel)]="email"
-              required
-              email
-              autocomplete="username"
-              placeholder="you@example.com"
-          /></label>
-          <label
-            >Password<input
-              type="password"
-              name="password"
-              [(ngModel)]="password"
-              required
-              autocomplete="current-password"
-          /></label>
-          @if (loginError()) {
-            <p class="error" role="alert">{{ loginError() }}</p>
-          }
-          @if (registering) {
-            <label
-              >Confirm password<input
-                type="password"
-                name="confirmation"
-                [(ngModel)]="confirmation"
-                required
-                autocomplete="new-password"
-            /></label>
-            <p>Use at least 12 characters with uppercase, lowercase, a number and a symbol.</p>
-          }
-          <button type="submit" class="primary" [disabled]="loginForm.invalid || busy()">
-            {{
-              busy() ? 'Please waitÂ¦' : registering ? 'Create account' : 'Log in'
-            }}</button><button
-            type="button"
-            (click)="registering = !registering"
-            [disabled]="busy()"
-          >
-            {{ registering ? 'Already registered? Log in' : 'Create an account' }}
-          </button>
+          @if (loginError()) { <p class="error" role="alert">{{ loginError() }}</p> }
+          <button type="submit" class="primary login-submit" [disabled]="loginForm.invalid || busy()">{{ busy() ? 'Please wait…' : registering ? 'Create account' : 'Log in' }}</button>
+          <button type="button" class="text-button" (click)="registering = !registering" [disabled]="busy()">{{ registering ? 'Already registered? Log in' : 'Create an account' }}</button>
         </form>
       </section>
     </main>
   } @else {
-    <main>
-      @if (loginError()) {
-        <p class="error" role="alert">{{ loginError() }}</p>
-      }
-      @defer (on immediate) {
-        <nav class="workspace-nav" aria-label="Workspace navigation">
-          <dx-tabs
-            [items]="sections"
-            [selectedIndex]="section()"
-            (selectedIndexChange)="changeSection($event)"
-            stylingMode="secondary"
-          />
+    <div class="app-layout" [class.menu-open]="menuOpen()">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand sidebar-brand" href="/dashboard" aria-label="Firm Management dashboard">
+          <span class="mark" aria-hidden="true">F</span>
+          <span class="brand-name">Firm Management<span class="brand-dot">.</span></span>
+        </a>
+        <p class="nav-label">WORKSPACE</p>
+        <nav>
+          @for (item of sections; track item.route; let index = $index) {
+            <button type="button" class="nav-item" [class.active]="section() === index" [attr.aria-current]="section() === index ? 'page' : null" (click)="navigate(item.route)">
+              <span class="dx-icon dx-icon-{{ item.icon }}"></span><span>{{ item.label }}</span>
+            </button>
+          }
         </nav>
-        <router-outlet />
-      } @placeholder {
-        <p role="status">Loading transport workspace…</p>
-      }
-    </main>
+        <div class="sidebar-help"><span class="dx-icon dx-icon-info"></span><div><strong>Operations workspace</strong><p>Private to your account</p></div></div>
+      </aside>
+      @if (menuOpen()) { <button class="nav-scrim" aria-label="Close navigation" (click)="menuOpen.set(false)"></button> }
+      <div class="workspace-frame">
+        <header class="topbar">
+          <button class="menu-toggle" aria-label="Open navigation" (click)="menuOpen.set(true)"><span class="dx-icon dx-icon-menu"></span></button>
+          <div><p class="topbar-kicker">FIRM OPERATIONS</p><strong>{{ sections[section()].label }}</strong></div>
+          <div class="account-menu"><span class="avatar">{{ (auth.user() || 'U').charAt(0).toUpperCase() }}</span><span class="account">{{ auth.user() }}</span><button class="logout-button" (click)="logout()" [disabled]="busy()">Log out</button></div>
+        </header>
+        <main class="workspace-main">
+          @if (loginError()) { <p class="error" role="alert">{{ loginError() }}</p> }
+          @defer (on immediate) { <router-outlet /> } @placeholder { <div class="page-skeleton" role="status">Loading workspace…</div> }
+        </main>
+      </div>
+    </div>
   }
 </div>

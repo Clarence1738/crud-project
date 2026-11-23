@@ -6,6 +6,11 @@
   gap: 12px;
   margin: 12px 0 20px;
 }
+.print-button { margin-left: auto; }
+@media print {
+  .print-button, .record-link, app-documents { display: none !important; }
+  .shipment-detail-card { break-inside: avoid; box-shadow: none; }
+}
 .shipment-detail-header p {
   margin: 4px 0 0;
 }
@@ -30,3 +35,49 @@
   margin-inline-start: 8px;
   color: #52675c;
 }
+.shipment-progress {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 0;
+  margin: 0 0 20px;
+  list-style: none;
+}
+.shipment-progress li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  color: #8b9a93;
+  font-size: 12px;
+  text-align: center;
+}
+.shipment-progress li::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 17px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: #dfe7e2;
+}
+.shipment-progress li:first-child::before { display: none; }
+.shipment-progress .dx-icon {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid #dfe7e2;
+  border-radius: 50%;
+  background: white;
+}
+.shipment-progress li.complete { color: #176d56; }
+.shipment-progress li.complete::before { background: #4aab8c; }
+.shipment-progress li.complete .dx-icon {
+  color: white;
+  border-color: #278568;
+  background: #278568;
+}
+.shipment-progress li.current .dx-icon { box-shadow: 0 0 0 5px #dff2eb; }

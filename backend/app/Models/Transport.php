@@ -10,12 +10,13 @@ class Transport extends Model
 {
     use HasUuids;
 
-    protected $fillable = ['customer', 'sender_company', 'recipient_company', 'origin', 'destination', 'vehicle', 'date', 'expected_arrival_date', 'status', 'reference', 'goods_description', 'quantity'];
+    protected $fillable = ['customer', 'sender_company', 'recipient_company', 'origin', 'destination', 'vehicle', 'driver_name', 'driver_phone', 'date', 'expected_arrival_date', 'status', 'reference', 'goods_description', 'quantity', 'notes'];
 
     protected $casts = [
         'delivered_at' => 'datetime',
         'reported_transit_started_at' => 'datetime',
         'quantity' => 'integer',
+        'archived_at' => 'datetime',
     ];
 
     protected $hidden = ['user_id'];

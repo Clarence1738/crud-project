@@ -202,11 +202,14 @@ export class Transports implements OnInit {
           origin: record.origin,
           destination: record.destination,
           vehicle: record.vehicle,
+          driver_name: record.driver_name ?? '',
+          driver_phone: record.driver_phone ?? '',
           date: record.date,
           expected_arrival_date: record.expected_arrival_date ?? '',
           reference: record.reference ?? '',
           goods_description: record.goods_description ?? '',
           quantity: record.quantity ?? null,
+          notes: record.notes ?? '',
           status: record.status,
         }
       : emptyRecord();
@@ -275,7 +278,7 @@ export class Transports implements OnInit {
       this.pendingDelete.set(null);
       await this.loadRecords();
       this.calendarRevision.update((revision) => revision + 1);
-      this.notice.set('Transport record deleted.');
+      this.notice.set('Transport record archived.');
     } catch (error) {
       this.notice.set(errorMessage(error));
     } finally {

@@ -21,7 +21,7 @@ class DeliveryAnalytics
             WITH delivered AS (
                 SELECT date AS departure_date, {$deliveryDate} AS delivery_date, promised_arrival_date
                 FROM transports
-                WHERE user_id = ? AND status = 'Delivered'
+                WHERE user_id = ? AND archived_at IS NULL AND status = 'Delivered'
             ), intervals AS (
                 SELECT {$duration} AS days FROM delivered WHERE delivery_date >= departure_date
             ), ranked AS (

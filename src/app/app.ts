@@ -1,6 +1,5 @@
 import { afterNextRender, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DxTabsComponent } from 'devextreme-angular/ui/tabs';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
@@ -9,7 +8,7 @@ import { errorMessage } from './api.service';
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule, RouterOutlet, DxTabsComponent],
+  imports: [FormsModule, RouterOutlet],
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
@@ -23,14 +22,19 @@ export class App {
   registering = false;
   readonly ready = signal(false);
   readonly busy = signal(false);
-  readonly sections = [{ text: 'Shipments' }, { text: 'Private documents' }];
+  readonly menuOpen = signal(false);
+  readonly sections = [
+    { label: 'Dashboard', icon: 'home', route: '/dashboard' },
+    { label: 'Shipments', icon: 'car', route: '/' },
+    { label: 'Documents', icon: 'file', route: '/documents' },
+  ];
   private readonly router = inject(Router);
   readonly section = toSignal(
     this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd),
-      map((event) => (event.urlAfterRedirects.split(/[?#]/)[0] === '/documents' ? 1 : 0)),
+      map((event) => this.sectionFor(event.urlAfterRedirects)),
     ),
-    { initialValue: this.router.url === '/documents' ? 1 : 0 },
+    { initialValue: this.sectionFor(this.router.url) },
   );
 
   constructor() {
@@ -81,10 +85,15 @@ export class App {
     }
   }
 
-  changeSection(index: number): void {
-    if (index === this.section()) return;
-    if (index === 0 || index === 1) {
-      void this.router.navigateByUrl(index === 1 ? '/documents' : '/');
-    }
+  navigate(route: string): void {
+    this.menuOpen.set(false);
+    void this.router.navigateByUrl(route);
+  }
+
+  private sectionFor(url: string): number {
+    const path = url.split(/[?#]/)[0];
+    if (path === '/dashboard') return 0;
+    if (path === '/documents') return 2;
+    return 1;
   }
 }

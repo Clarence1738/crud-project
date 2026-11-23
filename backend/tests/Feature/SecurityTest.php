@@ -140,7 +140,9 @@ class SecurityTest extends TestCase
         $this->putJson('/api/transports/'.$id, [...$this->transportData(), 'expected_arrival_date' => null])
             ->assertOk()->assertJsonPath('data.expected_arrival_date', null);
         $this->deleteJson('/api/transports/'.$id)->assertNoContent();
-        $this->assertDatabaseMissing('transports', ['id' => $id]);
+        $this->assertDatabaseHas('transports', ['id' => $id]);
+        $this->assertNotNull(Transport::findOrFail($id)->archived_at);
+        $this->getJson('/api/transports')->assertJsonMissing(['id' => $id]);
     }
 
     public function test_only_owner_can_change_shipment_status(): void
@@ -209,7 +211,7 @@ class SecurityTest extends TestCase
         $this->getJson('/api/transports?exception=due_today')->assertOk()->assertJsonPath('total', 0);
     }
 
-    public function test_shipment_documents_are_private_and_stay_available_after_deletion(): void
+    public function test_shipment_documents_are_private_and_stay_linked_after_archiving(): void
     {
         Storage::fake('private');
         $owner = User::factory()->create();
@@ -227,7 +229,9 @@ class SecurityTest extends TestCase
         $this->postJson('/api/documents', $attachment())->assertNotFound();
         $this->getJson('/api/documents/'.$document.'/download')->assertNotFound();
         $this->actingAs($owner)->deleteJson('/api/transports/'.$id)->assertNoContent();
-        $this->getJson('/api/documents')->assertOk()->assertJsonPath('data.0.id', $document);
+        $this->getJson('/api/documents')->assertOk()->assertJsonCount(0, 'data');
+        $this->getJson('/api/documents?transport_id='.$id)
+            ->assertOk()->assertJsonPath('data.0.id', $document);
         $this->get('/api/documents/'.$document.'/download')->assertOk();
     }
 }

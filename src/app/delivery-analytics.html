@@ -2,7 +2,7 @@
   @if (error()) {
     <div class="analytics-error">
       <p role="alert">{{ error() }}</p>
-      <button type="button" (click)="retry()">Retry analytics</button>
+      <button class="retry-button" type="button" (click)="retry()"><span class="dx-icon dx-icon-refresh"></span> Retry analytics</button>
     </div>
   }
   @if (metrics(); as report) {

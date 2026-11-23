@@ -32,6 +32,10 @@ export class ShipmentDetails {
   readonly loading = signal(true);
   readonly error = signal('');
 
+  print(): void {
+    if (typeof window !== 'undefined') window.print();
+  }
+
   constructor() {
     const revisions = inject(RecordRevisionsService);
     let previousId: string | null = null;

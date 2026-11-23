@@ -1,0 +1,23 @@
+<section class="dashboard-page" aria-labelledby="dashboard-title">
+  <div class="page-heading">
+    <div><p class="eyebrow">OPERATIONS OVERVIEW</p><h1 id="dashboard-title">Dashboard</h1><p>Monitor current movements, delivery performance, and exceptions.</p></div>
+    <button class="primary heading-action" (click)="openShipments()">View shipment register <span class="dx-icon dx-icon-arrowright"></span></button>
+  </div>
+  @if (error()) { <div class="error-state"><p role="alert">{{ error() }}</p><button class="secondary" (click)="load()"><span class="dx-icon dx-icon-refresh"></span> Try again</button></div> }
+  @if (loading()) {
+    <div class="kpi-grid" aria-label="Loading dashboard"><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div><div class="skeleton-card"></div></div>
+  } @else {
+    <div class="kpi-grid">
+      <button class="kpi-card" (click)="openShipments()"><span class="kpi-icon blue dx-icon dx-icon-car"></span><span>All shipments</span><strong>{{ total() | number }}</strong><small>Across your account</small></button>
+      <button class="kpi-card" (click)="openShipments()"><span class="kpi-icon amber dx-icon dx-icon-clock"></span><span>Due today</span><strong>{{ exceptions().due_today | number }}</strong><small>Expected arrivals</small></button>
+      <button class="kpi-card alert" (click)="openShipments()"><span class="kpi-icon red dx-icon dx-icon-warning"></span><span>Overdue</span><strong>{{ exceptions().overdue | number }}</strong><small>Needs attention</small></button>
+      <button class="kpi-card" (click)="openShipments()"><span class="kpi-icon green dx-icon dx-icon-check"></span><span>On-time rate</span><strong>{{ analytics()?.on_time?.rate === null ? '—' : (analytics()?.on_time?.rate | percent: '1.0-0') }}</strong><small>{{ analytics()?.delivered || 0 }} delivered</small></button>
+    </div>
+    <div class="dashboard-grid">
+      <section class="dashboard-card"><div class="card-heading"><div><h2>Shipment status</h2><p>Current register distribution</p></div></div><dx-pie-chart type="doughnut" [dataSource]="statusData()" [series]="{ argumentField: 'status', valueField: 'count' }" [palette]="palette" [legend]="{ visible: true, horizontalAlignment: 'center', verticalAlignment: 'bottom' }" [tooltip]="{ enabled: true }" [innerRadius]="0.72" [size]="{ height: 300 }" /></section>
+      <section class="dashboard-card"><div class="card-heading"><div><h2>Recent shipments</h2><p>Latest activity in your register</p></div><button class="text-button" (click)="openShipments()">View all <span class="dx-icon dx-icon-arrowright"></span></button></div>
+        <div class="recent-list">@for (record of recent(); track record.id) { <button class="recent-row" (click)="openShipment(record.id)"><span class="route-icon dx-icon dx-icon-car"></span><span class="recent-main"><strong>{{ record.recipient_company }}</strong><small>{{ record.origin }} → {{ record.destination }}</small></span><span class="badge" [class.transit]="record.status === 'In transit'" [class.delivered]="record.status === 'Delivered'">{{ record.status }}</span><span class="row-arrow dx-icon dx-icon-chevronright"></span></button> } @empty { <div class="empty-state"><span class="dx-icon dx-icon-car"></span><h3>No shipments yet</h3><p>Create your first shipment to populate the dashboard.</p><button class="primary" (click)="openShipments()"><span class="dx-icon dx-icon-plus"></span> Add a shipment</button></div> }</div>
+      </section>
+    </div>
+  }
+</section>

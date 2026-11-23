@@ -15,6 +15,7 @@
     #transportForm="ngForm"
     (ngSubmit)="saveShipment.emit()"
   >
+    <h3 class="form-section-title">Companies and vehicle</h3>
     <div class="form-grid">
       <label
         >Vehicle registration
@@ -47,6 +48,27 @@
           [inputAttr]="{ 'aria-label': 'Receiving company' }"
         />
       </label>
+      <label>
+        Driver name (optional)
+        <dx-text-box
+          name="driver_name"
+          [(ngModel)]="draft().driver_name"
+          [maxLength]="120"
+          [inputAttr]="{ 'aria-label': 'Driver name' }"
+        />
+      </label>
+      <label>
+        Driver phone (optional)
+        <dx-text-box
+          name="driver_phone"
+          [(ngModel)]="draft().driver_phone"
+          [maxLength]="30"
+          [inputAttr]="{ 'aria-label': 'Driver phone' }"
+        />
+      </label>
+    </div>
+    <h3 class="form-section-title">Route and schedule</h3>
+    <div class="form-grid">
       <label
         >Origin
         <dx-text-box
@@ -82,6 +104,9 @@
           [inputAttr]="{ 'aria-label': 'Shipment reference' }"
         />
       </label>
+    </div>
+    <h3 class="form-section-title">Goods and internal notes</h3>
+    <div class="form-grid">
       <label>
         Goods description (optional)
         <textarea
@@ -102,6 +127,19 @@
           step="1"
         />
       </label>
+      <label class="form-span">
+        Internal notes (optional)
+        <textarea
+          name="notes"
+          [(ngModel)]="draft().notes"
+          maxlength="2000"
+          rows="3"
+          placeholder="Handling instructions, contacts, or operational notes"
+        ></textarea>
+      </label>
+    </div>
+    <h3 class="form-section-title">Status</h3>
+    <div class="form-grid">
       <label>
         Expected arrival date (optional)
         <input

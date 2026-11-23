@@ -1,10 +1,13 @@
 # Firm Management System
 
-Angular 21 frontend with a DevExtreme DataGrid for the transport register, a Laravel 12 backend, and PostgreSQL.
-Private documents have their own CRUD
-screen. Records and files belong to individual accounts.
+Angular 21 firm-operations frontend with DevExtreme components, a Laravel 12
+backend, and PostgreSQL. The main workflow manages goods moving between sending
+and receiving companies. Private documents have their own CRUD screen, and
+shipment-specific files can be managed from shipment details. Records and files
+belong to individual accounts.
 
-The transport grid, transport dialogs, and document delete confirmation use DevExtreme 26.1.
+The dashboard charts, transport grid, transport dialogs, arrival calendar,
+analytics, and document delete confirmation use DevExtreme 26.1.
 During evaluation, DevExtreme can show a trial warning.
 Register a valid key for production use. [DevExtreme licensing](https://js.devexpress.com/Angular/Documentation/Guide/Common/Licensing/)
 
@@ -116,28 +119,85 @@ POST /api/register and /api/login establish a session; GET /api/me returns the
 current user and POST /api/logout ends the session. Login/registration are rate
 limited. All data routes require authentication.
 
-The workspace opens on **Transport** for incoming deliveries and outgoing shipments.
+## Application functions
+
+### Dashboard and navigation
+
+After login, the responsive workspace provides **Dashboard**, **Shipments**, and
+**Documents** navigation. On smaller screens, the sidebar becomes a drawer.
+The dashboard summarizes:
+
+- Total shipments in the account
+- Shipments due today
+- Overdue shipments requiring attention
+- On-time delivery performance
+- Shipment status distribution
+- Recently updated shipments with links to their detail pages
+
+Dashboard cards and recent records are interactive and open the relevant
+shipment workflow. Loading skeletons, empty states, retry actions, keyboard focus
+styles, and responsive layouts are included.
+
+### Shipment register
+
+The **Shipments** screen manages incoming deliveries and outgoing shipments.
 Use **Due today**, **Overdue**, or **Missing ETA** to filter open shipments using the
 Nairobi business date. Search runs across the signed-in account before pagination.
-The status chart still summarizes the current page.
-GET/POST /api/transports and GET/PUT/DELETE /api/transports/{id} manage the signed-in user's
-transport records. The **Arrival calendar** shows expected arrival dates and opens
-shipment details when you select an entry. PATCH /api/transports/{id}/status updates
-the status. Shipment details show history recorded since the upgrade and the actual
-delivery timestamp for shipments marked delivered after the upgrade.
-Existing records are available in the Transport register.
-New and edited shipments require sending and receiving company names as well as their
-origin and destination locations. Older shipments show missing company names until edited.
-Shipment reference, goods description, quantity, and expected arrival date are optional.
+The status chart summarizes the current page.
+
+The DevExtreme register supports row highlighting, column resizing, column
+reordering, a column chooser, header filters, filter rows, and grouping by
+dragging a column into the group panel. Server-side search and pagination remain
+the source of truth for the complete account register.
+
+New and edited shipments record:
+
+- Sending and receiving companies
+- Origin and destination
+- Vehicle registration
+- Optional driver name and phone number
+- Departure and expected-arrival dates
+- Status: Scheduled, In transit, or Delivered
+- Optional shipment reference, goods description, and quantity
+- Private internal operational notes
+
+If a reference is not supplied, Laravel generates one in the form
+SHP-YYMMDD-XXXXX. The **Arrival calendar** shows expected arrivals and opens the
+selected shipment. **Delivery analytics** reports on-time delivery, promised ETA
+coverage, and transit-time measures. **Export CSV** downloads the active account's
+shipment register.
+
+GET/POST /api/transports and GET/PUT/DELETE /api/transports/{id} manage the
+signed-in user's shipment records. PATCH /api/transports/{id}/status updates a
+status without replacing the rest of the record. GET /api/transports/export
+downloads CSV data.
+
+Deleting from the interface is implemented as an archive operation. Archived
+shipments are removed from active lists, calendars, analytics, and exports, but
+their shipment data and linked documents remain stored.
+
+### Shipment details
+
 Select **View details** in the shipment grid to open `/shipments/{id}` and see its schedule,
-goods, status history, and documents. Use the browser Back button or **Back to shipments**
-to return to the register. Upload attachments from the details view. If a shipment is deleted, its
-attachments become general Private documents for the same account.
+companies, driver contact, goods, internal notes, status history, and documents.
+A visual progress stepper shows Scheduled, In transit, and Delivered stages.
+The actual delivery timestamp and transit-day calculation appear after delivery.
+Use **Print summary** for a print-friendly shipment record. Use the browser Back
+button or **Back to shipments** to return to the register. Attachments can be
+uploaded from the details view.
+
+### Documents
+
+The **Documents** screen manages account-private files, while the shipment detail
+screen manages files linked to a specific shipment. Users can upload, rename,
+replace, download, paginate, and delete their own documents. Delete confirmation
+uses a DevExtreme popup.
 
 ## Code organization and scaling
 
 - Angular loads the register, shipment details, and private documents through routes.
-  Separate components own the shipment editor and arrival calendar.
+  The dashboard, shipment editor, arrival calendar, delivery analytics, documents,
+  and shipment details are separate lazy-loaded or deferred components.
 - Laravel's shipment module contains `TransportQueries` for account-scoped reads and
   `TransportStatusService` for shipment writes and history in a single transaction.
   The document module owns private file writes. HTTP controllers handle authorization,

@@ -28,6 +28,7 @@ Route::prefix('api')->middleware('private.responses')->group(function (): void {
         Route::get('transports', [TransportController::class, 'index_transports'])->name('transports.index');
         Route::get('transports/calendar', [TransportController::class, 'calendar']);
         Route::get('transports/analytics', [TransportController::class, 'analytics']);
+        Route::get('transports/export', [TransportController::class, 'export']);
         Route::patch('transports/{transport}/status', [TransportController::class, 'update_transport_status']);
         Route::post('transports', [TransportController::class, 'store_transport'])->name('transports.store');
         Route::get('transports/{transport}', [TransportController::class, 'show_transport'])->name('transports.show');

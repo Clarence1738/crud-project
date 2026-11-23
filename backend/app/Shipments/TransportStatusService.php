@@ -3,6 +3,7 @@
 namespace App\Shipments;
 
 use App\Models\Transport;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
 class TransportStatusService
@@ -11,6 +12,7 @@ class TransportStatusService
     {
         $transport = new Transport($attributes);
         $transport->customer ??= $transport->recipient_company;
+        $transport->reference ??= 'SHP-'.now('Africa/Nairobi')->format('ymd').'-'.Str::upper(Str::random(5));
         $transport->user_id = $userId;
         DB::transaction(fn () => $this->save($transport));
 

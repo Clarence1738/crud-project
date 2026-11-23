@@ -42,6 +42,8 @@ export interface TransportRecord {
   origin: string;
   destination: string;
   vehicle: string;
+  driver_name?: string | null;
+  driver_phone?: string | null;
   date: string;
   expected_arrival_date: string | null;
   promised_arrival_date?: string | null;
@@ -49,6 +51,7 @@ export interface TransportRecord {
   reference?: string | null;
   goods_description?: string | null;
   quantity?: number | null;
+  notes?: string | null;
   delivered_at?: string | null;
 }
 export interface TransportDetails extends TransportRecord {
@@ -68,11 +71,14 @@ export const emptyRecord = (): TransportDraft => ({
   origin: '',
   destination: '',
   vehicle: '',
+  driver_name: '',
+  driver_phone: '',
   date: '',
   expected_arrival_date: '',
   reference: '',
   goods_description: '',
   quantity: null,
+  notes: '',
   status: 'Scheduled',
 });
 
