@@ -9,5 +9,5 @@ class LivestockRecord extends Model
 {
     use HasUuids;
     protected $fillable = ['tracking_type', 'tag_number', 'group_name', 'species', 'breed', 'sex', 'quantity', 'birth_date', 'status', 'location', 'notes'];
-    protected $casts = ['birth_date' => 'date:Y-m-d', 'quantity' => 'integer'];
+    protected $casts = ['birth_date' => 'date:Y-m-d', 'quantity' => 'integer', 'archived_at' => 'datetime'];
 }

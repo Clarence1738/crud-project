@@ -1,0 +1,128 @@
+<section class="collab-panel" aria-labelledby="members-title">
+  <header class="collab-head">
+    <div>
+      <h2 id="members-title">People on {{ farm().name }}</h2>
+      <p>
+        Your role: <strong>{{ farm().role }}</strong>. Owners manage members; Managers record farm
+        operations; Workers record activities and update tasks assigned to them.
+      </p>
+    </div>
+  </header>
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+  @if (notice()) {
+    <p class="notice" role="status">{{ notice() }}</p>
+  }
+
+  <table class="member-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>E-mail</th>
+        <th>Role</th>
+        <th><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (member of members(); track member.id) {
+        <tr>
+          <td>
+            {{ member.name }}
+            @if (member.id === userId()) {
+              <small>(you)</small>
+            }
+          </td>
+          <td>{{ member.email }}</td>
+          <td>
+            @if (isOwner() && member.role !== 'Owner') {
+              <select
+                [attr.aria-label]="'Role for ' + member.name"
+                [ngModel]="member.role"
+                (ngModelChange)="changeRole(member, $event)"
+                [disabled]="busy()"
+              >
+                @for (role of roles; track role) {
+                  <option [value]="role">{{ role }}</option>
+                }
+              </select>
+            } @else {
+              {{ member.role }}
+            }
+          </td>
+          <td class="member-actions">
+            @if (member.role !== 'Owner' && (isOwner() || member.id === userId())) {
+              <button type="button" (click)="remove(member)" [disabled]="busy()">
+                {{ member.id === userId() ? 'Leave farm' : 'Remove' }}
+              </button>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  @if (isOwner()) {
+    <div class="collab-grid">
+      <form class="collab-form" (ngSubmit)="invite()">
+        <h3>Invite a person</h3>
+        <p>
+          The invitee signs in with this e-mail address and enters the code. Codes expire after 7
+          days and work once.
+        </p>
+        <label
+          >E-mail address<input
+            type="email"
+            name="inviteEmail"
+            [(ngModel)]="inviteEmail"
+            required
+            maxlength="255"
+            autocomplete="off"
+        /></label>
+        <label
+          >Role<select name="inviteRole" [(ngModel)]="inviteRole">
+            @for (role of roles; track role) {
+              <option [value]="role">{{ role }}</option>
+            }
+          </select></label
+        >
+        <button class="primary" [disabled]="busy() || !inviteEmail">Create invitation</button>
+      </form>
+      <div class="collab-form">
+        <h3>Pending invitations</h3>
+        @if (issued(); as invite) {
+          <div class="issued-code">
+            <p>
+              Share this code with <strong>{{ invite.email }}</strong>. It is shown only once.
+            </p>
+            <code>{{ invite.code }}</code>
+            <button type="button" (click)="copyCode(invite.code!)">Copy code</button>
+          </div>
+        }
+        @for (invitation of invitations(); track invitation.id) {
+          <div class="summary-row">
+            <span
+              >{{ invitation.email }} · {{ invitation.role }} · expires
+              {{ invitation.expires_at.slice(0, 10) }}</span
+            ><button type="button" (click)="revoke(invitation)" [disabled]="busy()">Revoke</button>
+          </div>
+        } @empty {
+          <p>No pending invitations.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <form class="collab-form join-form" (ngSubmit)="join()">
+    <h3>Join another farm</h3>
+    <label
+      >Invitation code<input
+        name="joinCode"
+        [(ngModel)]="joinCode"
+        required
+        maxlength="100"
+        autocomplete="off"
+    /></label>
+    <button class="primary" [disabled]="busy() || !joinCode">Join farm</button>
+  </form>
+</section>

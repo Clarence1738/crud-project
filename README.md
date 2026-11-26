@@ -1,13 +1,19 @@
 # Farm Management System
 
-Angular 21 firm-operations frontend with DevExtreme components, a Laravel 12
-backend, and PostgreSQL. The main workflow manages goods moving between sending
-and receiving companies. Private documents have their own CRUD screen, and
-shipment-specific files can be managed from shipment details. Records and files
-belong to individual accounts.
+Farm operations workspace for Kenyan crop and livestock farms: Angular 21 with
+DevExtreme 26.1, a Laravel 12 API, and PostgreSQL 18. Users create farms, invite
+Managers and Workers, and record fields, crop seasons, crop activities,
+livestock, animal health, inventory, tasks, equipment, and KES finance. All farm
+records are scoped to the farms the signed-in user is a member of.
 
-The dashboard charts, transport grid, transport dialogs, arrival calendar,
-analytics, and document delete confirmation use DevExtreme 26.1.
+The project began as a shipment and private-document system. The shipment
+module is retained in the source tree and API but is not currently linked from
+the Angular routes or sidebar (see [Retained shipment module](#retained-shipment-module)).
+Private documents remain available from the **Documents** screen.
+
+Requirements, functional specification, design, and decisions are in
+[`docs/farm-management-system`](docs/farm-management-system), with PDF editions in
+[`docs/farm-management-system/pdf`](docs/farm-management-system/pdf).
 During evaluation, DevExtreme can show a trial warning.
 Register a valid key for production use. [DevExtreme licensing](https://js.devexpress.com/Angular/Documentation/Guide/Common/Licensing/)
 
@@ -100,7 +106,8 @@ cannot be established safely. New records are stored by the backend.
 Backend tests use an isolated in-memory SQLite database by default, fake private
 storage, and test-only users. They cover registration, password hashing, login,
 logout, rate limiting, ownership on all operations, upload validation, file
-replacement/deletion and CSRF rejection. SQLite tests do not prove PostgreSQL
+replacement/deletion, CSRF rejection, farm isolation, farm roles, invitations,
+and crop and livestock archiving. SQLite tests do not prove PostgreSQL
 connectivity. For PostgreSQL integration testing, override DB_CONNECTION and
 DB_DATABASE with a disposable test database; RefreshDatabase resets its schema.
 Alternatively run ./scripts/test-postgres.ps1 to create, test and remove an isolated temporary PostgreSQL cluster automatically (requires the PostgreSQL binaries). This does not use your application database credentials.
@@ -119,24 +126,85 @@ POST /api/register and /api/login establish a session; GET /api/me returns the
 current user and POST /api/logout ends the session. Login/registration are rate
 limited. All data routes require authentication.
 
-## Application functions
+## Farm application
 
-### Dashboard and navigation
+After login the app opens `/dashboard`. The sidebar provides **Dashboard**,
+**Farms**, **Crops**, **Livestock**, **Crop activities**, **Animal health**,
+**Fields**, **Inventory**, **Tasks**, **Equipment**, **Finance**, and
+**Documents**. On smaller screens the sidebar becomes a drawer.
 
-After login, the responsive workspace provides **Dashboard**, **Shipments**, and
-**Documents** navigation. On smaller screens, the sidebar becomes a drawer.
-The dashboard summarizes:
+Every screen works on one **active farm**, chosen from the farm picker. The
+choice is remembered in the browser across reloads, used only while the user is
+still a member of that farm, and cleared on logout.
 
-- Total shipments in the account
-- Shipments due today
-- Overdue shipments requiring attention
-- On-time delivery performance
-- Shipment status distribution
-- Recently updated shipments with links to their detail pages
+| Screen | What it does |
+|---|---|
+| Dashboard | Active crop seasons, active livestock count, crop records, farm size, land utilization chart, livestock summary. Archived records are excluded. |
+| Farms | Farm cards with the user's role, farm details (Owner edits), members, invitations, and joining another farm with a code. |
+| Crops | Crop seasons on a field: add, edit, archive, restore, show archived. Crop area cannot exceed the field size. |
+| Livestock | Individual animals (unique tag per farm) and groups or flocks: add, edit, archive, restore. |
+| Crop activities | Land preparation, planting, irrigation, fertilizer, spraying, scouting, weeding, and harvesting against an open crop season, with KES cost. |
+| Animal health | Vaccination, treatment, diagnosis, deworming, and check-ups for active animals, with medicine, cost, and next due date. |
+| Fields, Inventory, Equipment | Configurable lists with add and edit. |
+| Tasks | Priority, due date, status, and an assignee chosen from farm members. |
+| Finance | KES income and expense records (Owner only). |
+| Documents | Account-private file upload, rename, replace, download, and delete. |
 
-Dashboard cards and recent records are interactive and open the relevant
-shipment workflow. Loading skeletons, empty states, retry actions, keyboard focus
-styles, and responsive layouts are included.
+### Roles and collaboration
+
+The farm creator is its **Owner**. The Owner invites people as **Manager** or
+**Worker** from the Farms screen. An invitation produces a one-time code, shown
+once, which expires after 7 days. The invitee signs in with the invited e-mail
+address and enters the code. No e-mail is sent; the Owner shares the code.
+Only a SHA-256 hash of the code is stored.
+
+| Capability | Owner | Manager | Worker |
+|---|:-:|:-:|:-:|
+| View dashboard and operational records | Yes | Yes | Yes |
+| Record crop activities and animal health events | Yes | Yes | Yes |
+| Add, edit, archive crops, livestock, fields, inventory, equipment, tasks | Yes | Yes | No |
+| Update status of tasks assigned to them | Yes | Yes | Yes |
+| Finance records | Yes | No | No |
+| Edit farm details, invite, change roles, remove members | Yes | No | No |
+| Leave the farm | No | Yes | Yes |
+
+Laravel enforces these rules in `App\Farms\FarmAccess`; the Angular interface
+hides actions the role cannot use. Non-members receive 404 for a farm's records,
+and members without the capability receive 403. Removing a member unassigns
+their tasks. Audit logging and a System Administrator role are not implemented.
+
+### Farm API
+
+| Method and path | Purpose |
+|---|---|
+| `GET/POST /api/farms`, `PUT /api/farms/{farm}` | List farms with the user's role; create (creator becomes Owner); edit (Owner) |
+| `GET /api/farms/{farm}/overview` | Dashboard totals and land utilization |
+| `GET/POST /api/farms/{farm}/crops`, `PUT .../crops/{crop}`, `PATCH .../crops/{crop}/archive` | Crop seasons; `?archived=1` lists archived records |
+| `GET/POST /api/farms/{farm}/livestock`, `PUT .../livestock/{id}`, `PATCH .../livestock/{id}/archive` | Livestock records |
+| `GET/POST /api/farms/{farm}/operations/{module}`, `PUT .../operations/{module}/{record}` | Modules: `fields`, `activities`, `health`, `inventory`, `tasks`, `equipment`, `finance` |
+| `PATCH /api/farms/{farm}/tasks/{task}/status` | Task status change (Workers: own assigned tasks) |
+| `GET /api/farms/{farm}/members`, `PATCH/DELETE .../members/{user}` | Members, role change, removal or leaving |
+| `GET/POST /api/farms/{farm}/invitations`, `DELETE .../invitations/{id}` | Pending invitations, create, revoke (Owner) |
+| `POST /api/farm-invitations/accept` | Accept an invitation code |
+
+Linked records must belong to the same farm: an activity needs an open crop
+season (not archived, completed, or cancelled), a health event needs an active,
+unarchived animal, and a task assignee must be a farm member.
+
+Farm code lives in `src/app/farm-*.ts`, `src/app/farm.service.ts`,
+`backend/app/Farms`, `backend/app/Http/Controllers/Farm*Controller.php`, and the
+`2026_11_23_*` and `2026_11_25_*` migrations. Tests are in
+`backend/tests/Feature/FarmManagementTest.php`,
+`backend/tests/Feature/FarmCollaborationTest.php`, and
+`src/app/farm.service.spec.ts`.
+
+## Retained shipment module
+
+The shipment features below remain implemented in Angular components
+(`transports`, `shipment-editor`, `shipment-details`, `arrival-calendar`,
+`delivery-analytics`, `dashboard`) and in the Laravel API, but no current route
+or sidebar item opens them. They are kept intentionally and should not be
+removed without a product decision.
 
 ### Shipment register
 

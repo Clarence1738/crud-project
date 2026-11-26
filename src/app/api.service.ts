@@ -53,6 +53,9 @@ export function errorMessage(error: unknown): string {
     const errors = error.error?.errors as Record<string, string[]> | undefined;
     if (errors) return Object.values(errors).flat().join(' ');
     if (error.status === 404) return 'This item is unavailable. Refresh the list.';
+    const message = error.error?.message;
+    if ([403, 409, 422].includes(error.status) && typeof message === 'string' && message)
+      return message;
   }
   return 'The operation failed. Please try again.';
 }

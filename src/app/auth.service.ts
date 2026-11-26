@@ -13,6 +13,7 @@ export class AuthService {
   private readonly api = inject(ApiService);
   private readonly currentUser = signal<User | null>(null);
   readonly user = computed(() => (this.api.expired() ? null : (this.currentUser()?.email ?? null)));
+  readonly userId = computed(() => (this.api.expired() ? null : (this.currentUser()?.id ?? null)));
 
   async restore(): Promise<void> {
     await this.api.csrf();

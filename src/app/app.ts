@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map } from 'rxjs';
 import { AuthService } from './auth.service';
+import { FarmService } from './farm.service';
 import { errorMessage } from './api.service';
 
 @Component({
@@ -28,6 +29,8 @@ export class App {
     { label: 'Farms', icon: 'home', route: '/farms' },
     { label: 'Crops', icon: 'product', route: '/crops' },
     { label: 'Livestock', icon: 'food', route: '/livestock' },
+    { label: 'Crop activities', icon: 'event', route: '/activities' },
+    { label: 'Animal health', icon: 'favorites', route: '/health' },
     { label: 'Fields', icon: 'map', route: '/fields' },
     { label: 'Inventory', icon: 'box', route: '/inventory' },
     { label: 'Tasks', icon: 'checklist', route: '/tasks' },
@@ -36,6 +39,7 @@ export class App {
     { label: 'Documents', icon: 'file', route: '/documents' },
   ];
   private readonly router = inject(Router);
+  private readonly farms = inject(FarmService);
   readonly section = toSignal(
     this.router.events.pipe(
       filter((event) => event instanceof NavigationEnd),
@@ -83,6 +87,7 @@ export class App {
     this.busy.set(true);
     try {
       await this.auth.logout();
+      this.farms.clearSelection();
       this.email = '';
       await this.router.navigateByUrl('/');
     } catch (error) {
@@ -99,16 +104,6 @@ export class App {
 
   private sectionFor(url: string): number {
     const path = url.split(/[?#]/)[0];
-    if (path === '/dashboard') return 0;
-    if (path === '/farms') return 1;
-    if (path === '/crops') return 2;
-    if (path === '/livestock') return 3;
-    if (path === '/fields') return 4;
-    if (path === '/inventory') return 5;
-    if (path === '/tasks') return 6;
-    if (path === '/equipment') return 7;
-    if (path === '/finance') return 8;
-    if (path === '/documents') return 9;
-    return 0;
+    return Math.max(0, this.sections.findIndex((item) => item.route === path));
   }
 }

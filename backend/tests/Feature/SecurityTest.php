@@ -32,6 +32,16 @@ class SecurityTest extends TestCase
         $this->postJson('/api/login', ['email' => $user->email, 'password' => 'StrongPassword123!'])->assertOk();
     }
 
+    public function test_registration_rejects_weak_passwords(): void
+    {
+        foreach (['short1!A', 'alllowercase123!', 'NoNumbersHere!!', 'NoSymbols12345'] as $weak) {
+            $this->postJson('/api/register', ['name' => 'Weak', 'email' => 'weak@example.com',
+                'password' => $weak, 'password_confirmation' => $weak])
+                ->assertUnprocessable()->assertJsonValidationErrors('password');
+        }
+        $this->assertSame(0, User::count());
+    }
+
     public function test_login_is_rate_limited(): void
     {
         for ($attempt = 0; $attempt < 5; $attempt++) {

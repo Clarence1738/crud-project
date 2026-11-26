@@ -8,6 +8,8 @@ export const routes: Routes = [
   { path: 'farms', loadComponent: () => import('./farm-workspace').then((module) => module.FarmWorkspace) },
   { path: 'crops', loadComponent: () => import('./farm-workspace').then((module) => module.FarmWorkspace) },
   { path: 'livestock', loadComponent: () => import('./farm-workspace').then((module) => module.FarmWorkspace) },
+  { path: 'activities', data: { module: 'activities' }, loadComponent: () => import('./farm-module').then((module) => module.FarmModule) },
+  { path: 'health', data: { module: 'health' }, loadComponent: () => import('./farm-module').then((module) => module.FarmModule) },
   { path: 'fields', data: { module: 'fields' }, loadComponent: () => import('./farm-module').then((module) => module.FarmModule) },
   { path: 'inventory', data: { module: 'inventory' }, loadComponent: () => import('./farm-module').then((module) => module.FarmModule) },
   { path: 'tasks', data: { module: 'tasks' }, loadComponent: () => import('./farm-module').then((module) => module.FarmModule) },
