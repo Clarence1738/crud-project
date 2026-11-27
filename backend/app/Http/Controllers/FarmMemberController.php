@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Farms\AuditLog;
 use App\Farms\FarmAccess;
 use App\Models\Farm;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,7 @@ class FarmMemberController extends Controller
 {
     private const INVITATION_DAYS = 7;
 
-    public function __construct(private readonly FarmAccess $access) {}
+    public function __construct(private readonly FarmAccess $access, private readonly AuditLog $audit) {}
 
     public function index(Request $request, Farm $farm): JsonResponse
     {
@@ -44,6 +45,7 @@ class FarmMemberController extends Controller
         $membership = $this->membership($farm, $user);
         abort_if($membership->role === FarmAccess::OWNER, 422, 'The farm owner role cannot be changed.');
         DB::table('farm_memberships')->where('id', $membership->id)->update(['role' => $data['role'], 'updated_at' => now()]);
+        $this->audit->record($request, $farm, 'Updated', 'Membership', $this->memberName($user)." changed from {$membership->role} to {$data['role']}");
 
         return response()->json(['data' => ['id' => $user, 'role' => $data['role']]]);
     }
@@ -60,6 +62,7 @@ class FarmMemberController extends Controller
                 ->update(['assignee_id' => null, 'updated_at' => now()]);
             DB::table('farm_memberships')->where('id', $membership->id)->delete();
         });
+        $this->audit->record($request, $farm, 'Removed', 'Membership', $this->memberName($user).($self ? ' left the farm' : ' removed from the farm'));
 
         return response()->noContent();
     }
@@ -98,6 +101,8 @@ class FarmMemberController extends Controller
             ]);
         });
 
+        $this->audit->record($request, $farm, 'Invited', 'Membership', "{$data['role']} invitation issued to {$email}");
+
         return response()->json(['data' => [
             'id' => $id, 'email' => $email, 'role' => $data['role'], 'expires_at' => $expires->toIso8601String(), 'code' => $code,
         ]], 201);
@@ -108,6 +113,7 @@ class FarmMemberController extends Controller
         $this->access->authorize($request, $farm, 'manage-farm');
         $deleted = DB::table('farm_invitations')->where('id', $invitation)->where('farm_id', $farm->id)->whereNull('accepted_at')->delete();
         abort_unless($deleted, 404);
+        $this->audit->record($request, $farm, 'Revoked', 'Membership', 'Pending invitation revoked');
 
         return response()->noContent();
     }
@@ -136,8 +142,14 @@ class FarmMemberController extends Controller
             return Farm::findOrFail($invitation->farm_id);
         });
         $farm->setAttribute('role', $this->access->role($request, $farm));
+        $this->audit->record($request, $farm, 'Joined', 'Membership', "{$user->name} joined as {$invitation->role}");
 
         return response()->json(['data' => $farm]);
+    }
+
+    private function memberName(int $user): string
+    {
+        return (string) DB::table('users')->where('id', $user)->value('name');
     }
 
     private function membership(Farm $farm, int $user): object

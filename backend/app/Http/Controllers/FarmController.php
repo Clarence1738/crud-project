@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Farms\AuditLog;
 use App\Farms\FarmAccess;
 use App\Models\CropSeason;
 use App\Models\Farm;
@@ -13,15 +14,21 @@ use Illuminate\Validation\Rule;
 
 class FarmController extends Controller
 {
-    public function __construct(private readonly FarmAccess $access) {}
+    public function __construct(private readonly FarmAccess $access, private readonly AuditLog $audit) {}
 
     public function index(Request $request): JsonResponse
     {
         $farms = Farm::query()
             ->join('farm_memberships', 'farm_memberships.farm_id', '=', 'farms.id')
             ->where('farm_memberships.user_id', $request->user()->id)
+            ->leftJoin('farm_settings', 'farm_settings.farm_id', '=', 'farms.id')
             ->orderBy('farms.name')
-            ->get(['farms.*', 'farm_memberships.role']);
+            ->get(['farms.*', 'farm_memberships.role', 'farm_settings.manager_finance_access']);
+        // finance_access lets the interface show finance to Managers when the owner allows it.
+        $farms->each(function (Farm $farm): void {
+            $farm->setAttribute('finance_access', $farm->role === FarmAccess::OWNER || ($farm->role === FarmAccess::MANAGER && (bool) $farm->manager_finance_access));
+            $farm->offsetUnset('manager_finance_access');
+        });
 
         return response()->json(['data' => $farms]);
     }
@@ -37,7 +44,8 @@ class FarmController extends Controller
 
             return $farm;
         });
-        $farm->setAttribute('role', FarmAccess::OWNER);
+        $farm->setAttribute('role', FarmAccess::OWNER)->setAttribute('finance_access', true);
+        $this->audit->record($request, $farm, 'Created', 'Farm', $farm->name);
 
         return response()->json(['data' => $farm], 201);
     }
@@ -46,8 +54,9 @@ class FarmController extends Controller
     {
         $role = $this->access->authorize($request, $farm, 'manage-farm');
         $farm->update($this->farmData($request));
+        $this->audit->record($request, $farm, 'Updated', 'Farm', $farm->name);
 
-        return response()->json(['data' => $farm->fresh()->setAttribute('role', $role)]);
+        return response()->json(['data' => $farm->fresh()->setAttribute('role', $role)->setAttribute('finance_access', true)]);
     }
 
     public function overview(Request $request, Farm $farm): JsonResponse
@@ -91,6 +100,7 @@ class FarmController extends Controller
         $crop = new CropSeason($data);
         $crop->farm_id = $farm->id;
         $crop->save();
+        $this->audit->record($request, $farm, 'Created', 'Crop season', $this->cropLabel($crop));
 
         return response()->json(['data' => $crop], 201);
     }
@@ -101,6 +111,7 @@ class FarmController extends Controller
         $this->belongsTo($crop, $farm);
         abort_if($crop->archived_at !== null, 409, 'Restore this crop season before editing it.');
         $crop->update($this->cropData($request, $farm));
+        $this->audit->record($request, $farm, 'Updated', 'Crop season', $this->cropLabel($crop));
 
         return response()->json(['data' => $crop->fresh()]);
     }
@@ -111,6 +122,7 @@ class FarmController extends Controller
         $this->belongsTo($crop, $farm);
         $crop->archived_at = $this->archiveFlag($request) ? now() : null;
         $crop->save();
+        $this->audit->record($request, $farm, $crop->archived_at ? 'Archived' : 'Restored', 'Crop season', $this->cropLabel($crop));
 
         return response()->json(['data' => $crop->fresh()]);
     }
@@ -128,6 +140,7 @@ class FarmController extends Controller
         $record = new LivestockRecord($this->livestockData($request, $farm));
         $record->farm_id = $farm->id;
         $record->save();
+        $this->audit->record($request, $farm, 'Created', 'Livestock', $this->animalLabel($record));
 
         return response()->json(['data' => $record], 201);
     }
@@ -138,6 +151,7 @@ class FarmController extends Controller
         $this->belongsTo($livestock, $farm);
         abort_if($livestock->archived_at !== null, 409, 'Restore this livestock record before editing it.');
         $livestock->update($this->livestockData($request, $farm, $livestock->id));
+        $this->audit->record($request, $farm, 'Updated', 'Livestock', $this->animalLabel($livestock));
 
         return response()->json(['data' => $livestock->fresh()]);
     }
@@ -148,8 +162,19 @@ class FarmController extends Controller
         $this->belongsTo($livestock, $farm);
         $livestock->archived_at = $this->archiveFlag($request) ? now() : null;
         $livestock->save();
+        $this->audit->record($request, $farm, $livestock->archived_at ? 'Archived' : 'Restored', 'Livestock', $this->animalLabel($livestock));
 
         return response()->json(['data' => $livestock->fresh()]);
+    }
+
+    private function cropLabel(CropSeason $crop): string
+    {
+        return trim("{$crop->crop} ".($crop->variety ?? ''))." on {$crop->field_name}, {$crop->area_hectares} ha";
+    }
+
+    private function animalLabel(LivestockRecord $record): string
+    {
+        return ($record->tag_number ?? $record->group_name)." · {$record->species}";
     }
 
     private function cropData(Request $request, Farm $farm): array

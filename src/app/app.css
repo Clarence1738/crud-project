@@ -6,7 +6,7 @@
 
 /* Application shell */
 .app-layout { min-height: 100vh; display: grid; grid-template-columns: 248px minmax(0, 1fr); }
-.sidebar { position: sticky; top: 0; height: 100vh; padding: 24px 18px; background: #123e34; color: white; display: flex; flex-direction: column; z-index: 30; }
+.sidebar { position: sticky; top: 0; height: 100vh; padding: 20px 14px 16px; background: var(--fm-sidebar); border-right: 1px solid rgba(255,255,255,.04); color: white; display: flex; flex-direction: column; z-index: 30; }
 .sidebar-brand {
   width: 100%;
   min-width: 0;
@@ -14,7 +14,7 @@
   overflow: visible;
   color: white;
   font-size: 19px;
-  padding: 4px 8px 28px;
+  padding: 4px 8px 18px;
   white-space: nowrap;
 }
 .sidebar-brand .mark { flex: 0 0 38px; }
@@ -28,21 +28,31 @@
   visibility: visible;
 }
 .sidebar-brand .mark { background: #2b9677; }
-.nav-label { margin: 14px 12px 9px; color: #8db6a8; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; }
-.sidebar nav { display: grid; gap: 6px; }
-.nav-item { width: 100%; display: flex; align-items: center; gap: 13px; padding: 12px 14px; border: 0; color: #cde0d9; background: transparent; text-align: left; }
-.nav-item .dx-icon { font-size: 18px; }
-.nav-item:hover { color: white; background: rgba(255,255,255,.08); }
-.nav-item.active { color: white; background: #24785f; box-shadow: inset 3px 0 #65c4a4; }
-.sidebar-help { margin-top: auto; display: flex; gap: 11px; padding: 14px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; color: #d6e5df; font-size: 12px; }
+.nav-label { flex: 0 0 auto; margin: 18px 12px 6px; color: #7fa699; font-size: 10.5px; font-weight: 600; letter-spacing: .09em; }
+.sidebar nav { flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow-x: hidden; overflow-y: auto; margin: 0 -6px; padding: 0 6px 12px; scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.2) transparent; }
+.sidebar nav .nav-label:first-child { margin-top: 0; }
+.nav-item { flex: 0 0 auto; width: 100%; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border: 0; border-radius: 8px; color: #c6dad3; background: transparent; font-size: 13px; font-weight: 500; line-height: 1.3; text-align: left; transition: background-color .15s, color .15s; }
+.nav-item .dx-icon { flex: 0 0 auto; font-size: 16px; }
+.nav-item > span:nth-child(2) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-preview { flex: 0 0 auto; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; background: #e0b25a; font-size: 0; }
+.sidebar-help .nav-preview { display: inline-block; margin: 0 4px 1px 0; vertical-align: middle; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,.07); }
+.nav-item .dx-icon { opacity: .85; }
+.nav-item.active { color: #fff; background: rgba(101,196,164,.16); box-shadow: inset 3px 0 #65c4a4; font-weight: 600; }
+.nav-item.active .dx-icon { opacity: 1; color: #8fd8bd; }
+.sidebar-help { margin-top: 10px; flex: 0 0 auto; display: flex; gap: 10px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 10px; background: rgba(255,255,255,.03); color: #d6e5df; font-size: 12px; }
 .sidebar-help p { color: #9ebfb4; font-size: 11px; margin: 3px 0 0; }
-.workspace-frame { min-width: 0; display: grid; grid-template-rows: 72px minmax(0, 1fr); }
-.topbar { position: sticky; top: 0; z-index: 20; height: 72px; padding: 0 32px; border-bottom: 1px solid #dfe7e2; box-shadow: 0 2px 10px rgba(25,60,50,.04); }
+.workspace-frame { min-width: 0; display: grid; grid-template-rows: 60px minmax(0, 1fr); }
+.topbar { position: sticky; top: 0; z-index: 20; height: 60px; gap: 16px; padding: 0 clamp(20px, 3vw, 48px); border-bottom: 1px solid var(--fm-border); background: rgba(255,255,255,.92); backdrop-filter: saturate(1.4) blur(8px); font-weight: 400; }
+.breadcrumb { display: flex; flex: 1 1 auto; align-items: center; gap: 6px; min-width: 0; color: var(--fm-text-subtle); font-size: 13px; }
+.breadcrumb .dx-icon { font-size: 12px; }
+.breadcrumb strong { overflow: hidden; color: var(--fm-text); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
 .topbar-kicker { margin: 0 0 2px; color: #7b9188; font-size: 9px; line-height: 1; letter-spacing: 1.4px; }
 .account-menu { margin-left: auto; display: flex; align-items: center; gap: 11px; }
 .account-menu .account { margin: 0; }
-.avatar { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; background: #e2f0ea; color: #176d56; }
-.logout-button { padding: 8px 12px; }
+.account-menu .avatar { display: grid; place-items: center; width: 32px; height: 32px; margin: 0; padding: 0; border: 0; border-radius: 50%; font-weight: 600; line-height: 1; background: var(--fm-primary-soft); color: var(--fm-primary); font-size: 13px; }
+.account-menu .account { color: var(--fm-text-muted); font-size: 13px; }
+.logout-button { min-height: 32px; padding: 5px 12px; border-color: var(--fm-border-strong); border-radius: 8px; font-size: 12px; }
 .workspace-main {
   width: 100%;
   max-width: none;
@@ -51,8 +61,6 @@
   padding: clamp(22px, 2.4vw, 38px) clamp(20px, 3vw, 48px) clamp(40px, 5vw, 72px);
 }
 .menu-toggle, .nav-scrim { display: none; }
-.public-header { padding-inline: 5%; }
-.login-symbol { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 22px; border-radius: 13px; background: #e4f2ed; color: #176d56; font-size: 20px; }
 .login-submit { width: 100%; }
 .text-button { border: 0; background: transparent; color: #176d56; }
 .boot-state { min-height: 100vh; display: grid; place-content: center; justify-items: center; }
@@ -64,7 +72,7 @@
   .sidebar { position: fixed; left: 0; transform: translateX(-100%); width: 248px; transition: transform .2s ease; }
   .menu-open .sidebar { transform: translateX(0); }
   .nav-scrim { display: block; position: fixed; inset: 0; z-index: 25; border: 0; border-radius: 0; background: rgba(9,31,25,.48); }
-  .menu-toggle { display: inline-grid; place-items: center; width: 38px; height: 38px; padding: 0; }
+  .menu-toggle { display: inline-grid; place-items: center; flex: 0 0 auto; width: 38px; height: 38px; margin: 0; padding: 0; }
   .topbar { padding-inline: 20px; }
   .workspace-main { padding: 22px 18px 44px; }
 }

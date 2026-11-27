@@ -1,3 +1,11 @@
+@if (!transportId()) {
+  <header class="module-head">
+    <div>
+      <h1>Documents</h1>
+      <p>Upload and keep private files such as receipts, certificates and contracts. Only you can see them.</p>
+    </div>
+  </header>
+}
 <section class="documents" aria-labelledby="documents-title">
   <header class="documents-header">
     <h2 id="documents-title">
@@ -78,11 +86,17 @@
             </td>
           </tr>
         } @empty {
-          <tr>
-            <td colspan="3" class="empty">
-              {{ busy() ? 'Loading documents…' : 'No documents on this page' }}
-            </td>
-          </tr>
+          @if (busy()) {
+            <tr>
+              <td colspan="3" class="skeleton-cell">
+                <app-skeleton variant="lines" [columns]="3" [count]="4" label="Loading documents…" />
+              </td>
+            </tr>
+          } @else {
+            <tr>
+              <td colspan="3" class="empty">No documents on this page</td>
+            </tr>
+          }
         }
       </tbody>
     </table>

@@ -2,27 +2,38 @@
   @if (!ready()) {
     <main class="boot-state"><div class="spinner"></div><p role="status">Loading workspace…</p></main>
   } @else if (!auth.user()) {
-    <header class="public-header">
-      <a class="brand" href="/" aria-label="Farm Management home"><span class="mark">F</span><span>Farm Management<span class="brand-dot">.</span></span></a>
-    </header>
-    <main class="login-main">
-      <section class="login-card" aria-labelledby="login-title">
-        <div class="login-symbol"><span class="dx-icon dx-icon-car"></span></div>
-        <p class="eyebrow">OPERATIONS PLATFORM</p>
-        <h1 id="login-title">{{ registering ? 'Create your account' : 'Welcome back' }}</h1>
-        <p>{{ registering ? 'Set up your private farm workspace.' : 'Sign in to manage farms, crops, livestock, and documents.' }}</p>
-        <form #loginForm="ngForm" (ngSubmit)="login()">
-          @if (registering) { <label>Your name<input name="name" [(ngModel)]="name" required maxlength="120" autocomplete="name" /></label> }
-          <label>Email address<input type="email" name="email" [(ngModel)]="email" required email autocomplete="username" placeholder="you@company.com" /></label>
-          <label>Password<input type="password" name="password" [(ngModel)]="password" required [autocomplete]="registering ? 'new-password' : 'current-password'" /></label>
-          @if (registering) {
-            <label>Confirm password<input type="password" name="confirmation" [(ngModel)]="confirmation" required autocomplete="new-password" /></label>
-            <p class="field-help">Use at least 12 characters with uppercase, lowercase, a number and a symbol.</p>
-          }
-          @if (loginError()) { <p class="error" role="alert">{{ loginError() }}</p> }
-          <button type="submit" class="primary login-submit" [disabled]="loginForm.invalid || busy()">{{ busy() ? 'Please wait…' : registering ? 'Create account' : 'Log in' }}</button>
-          <button type="button" class="text-button" (click)="registering = !registering" [disabled]="busy()">{{ registering ? 'Already registered? Log in' : 'Create an account' }}</button>
-        </form>
+    <main class="login-split">
+      <section class="login-aside">
+        <a class="brand login-brand" href="/" aria-label="Farm Management home"><span class="mark">F</span><span>Farm Management<span class="brand-dot">.</span></span></a>
+        <div class="login-pitch">
+          <h2>Run every part of your farm from one place.</h2>
+          <p>Crops, livestock, stock, tasks, finance and reports for each farm, shared with the people who work on it.</p>
+          <ul class="login-points">
+            <li><span class="dx-icon dx-icon-product"></span><div><strong>Crops and livestock</strong><span>Seasons, activities, harvests, health and breeding</span></div></li>
+            <li><span class="dx-icon dx-icon-box"></span><div><strong>Stock, tasks and equipment</strong><span>Movements, reorder alerts, assignments and servicing</span></div></li>
+            <li><span class="dx-icon dx-icon-chart"></span><div><strong>Finance and reports</strong><span>Income, expenses, gross margin and CSV exports</span></div></li>
+          </ul>
+        </div>
+        <small>Farm Management System · Kenya</small>
+      </section>
+      <section class="login-panel">
+        <section class="login-card" aria-labelledby="login-title">
+          <p class="eyebrow">{{ registering ? 'NEW ACCOUNT' : 'SIGN IN' }}</p>
+          <h1 id="login-title">{{ registering ? 'Create your account' : 'Welcome back' }}</h1>
+          <p>{{ registering ? 'Set up your private farm workspace.' : 'Sign in to manage farms, crops, livestock, and documents.' }}</p>
+          <form #loginForm="ngForm" (ngSubmit)="login()">
+            @if (registering) { <label>Your name<input name="name" [(ngModel)]="name" required maxlength="120" autocomplete="name" /></label> }
+            <label>Email address<input type="email" name="email" [(ngModel)]="email" required email autocomplete="username" placeholder="you@company.com" /></label>
+            <label>Password<input type="password" name="password" [(ngModel)]="password" required [autocomplete]="registering ? 'new-password' : 'current-password'" /></label>
+            @if (registering) {
+              <label>Confirm password<input type="password" name="confirmation" [(ngModel)]="confirmation" required autocomplete="new-password" /></label>
+              <p class="field-help">Use at least 12 characters with uppercase, lowercase, a number and a symbol.</p>
+            }
+            @if (loginError()) { <p class="error" role="alert">{{ loginError() }}</p> }
+            <button type="submit" class="primary login-submit" [disabled]="loginForm.invalid || busy()">{{ busy() ? 'Please wait…' : registering ? 'Create account' : 'Log in' }}</button>
+            <button type="button" class="text-button" (click)="registering = !registering" [disabled]="busy()">{{ registering ? 'Already registered? Log in' : 'Create an account' }}</button>
+          </form>
+        </section>
       </section>
     </main>
   } @else {
@@ -32,21 +43,23 @@
           <span class="mark" aria-hidden="true">F</span>
           <span class="brand-name">Farm Management<span class="brand-dot">.</span></span>
         </a>
-        <p class="nav-label">WORKSPACE</p>
-        <nav>
+        <nav class="sidebar-nav">
           @for (item of sections; track item.route; let index = $index) {
-            <button type="button" class="nav-item" [class.active]="section() === index" [attr.aria-current]="section() === index ? 'page' : null" (click)="navigate(item.route)">
+            @if (!item.adminOnly || auth.isAdmin()) {
+            @if (index === 0 || sections[index - 1].group !== item.group) {<p class="nav-label">{{ item.group.toUpperCase() }}</p>}
+            <button type="button" class="nav-item" [title]="item.label" [class.active]="section() === index" [attr.aria-current]="section() === index ? 'page' : null" (click)="navigate(item.route)">
               <span class="dx-icon dx-icon-{{ item.icon }}"></span><span>{{ item.label }}</span>
             </button>
+            }
           }
         </nav>
-        <div class="sidebar-help"><span class="dx-icon dx-icon-info"></span><div><strong>Operations workspace</strong><p>Private to your account</p></div></div>
+        <div class="sidebar-help"><span class="dx-icon dx-icon-info"></span><div><strong>Farm Management System</strong><p>Version 1.0 · FMS-FS v1.0</p></div></div>
       </aside>
       @if (menuOpen()) { <button class="nav-scrim" aria-label="Close navigation" (click)="menuOpen.set(false)"></button> }
       <div class="workspace-frame">
         <header class="topbar">
           <button class="menu-toggle" aria-label="Open navigation" (click)="menuOpen.set(true)"><span class="dx-icon dx-icon-menu"></span></button>
-          <div><p class="topbar-kicker">FARM OPERATIONS</p><strong>{{ sections[section()].label }}</strong></div>
+          <nav class="breadcrumb" aria-label="Breadcrumb"><span>{{ sections[section()].group }}</span><span class="dx-icon dx-icon-chevronright" aria-hidden="true"></span><strong aria-current="page">{{ sections[section()].label }}</strong></nav>
           <div class="account-menu"><span class="avatar">{{ (auth.user() || 'U').charAt(0).toUpperCase() }}</span><span class="account">{{ auth.user() }}</span><button class="logout-button" (click)="logout()" [disabled]="busy()">Log out</button></div>
         </header>
         <main class="workspace-main">

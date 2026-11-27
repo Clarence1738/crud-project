@@ -221,3 +221,7 @@ td .actions {
     margin-inline: 16px;
   }
 }
+
+.skeleton-cell {
+  padding: 0;
+}

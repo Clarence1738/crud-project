@@ -13,6 +13,7 @@ import { FarmService } from './farm.service';
 describe('Transport API integration', () => {
   const auth = {
     user: signal<string | null>(null),
+    isAdmin: signal(false),
     restore: vi.fn(),
     login: vi.fn(),
     logout: vi.fn(),

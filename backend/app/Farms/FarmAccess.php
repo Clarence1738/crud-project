@@ -41,9 +41,24 @@ class FarmAccess
     {
         $role = $this->role($request, $farm);
         abort_if($role === null, 404);
-        abort_unless(in_array($role, self::CAPABILITIES[$capability], true), 403, 'Your farm role does not allow this action.');
+        abort_unless($this->allows($role, $capability, $farm), 403, 'Your farm role does not allow this action.');
 
         return $role;
+    }
+
+    /** Role capability, plus finance for Managers when the owner has enabled it in farm settings. */
+    public function allows(string $role, string $capability, Farm|string $farm): bool
+    {
+        if (self::can($role, $capability)) {
+            return true;
+        }
+
+        return $capability === 'finance' && $role === self::MANAGER && $this->managerFinanceAccess($farm);
+    }
+
+    public function managerFinanceAccess(Farm|string $farm): bool
+    {
+        return (bool) DB::table('farm_settings')->where('farm_id', $farm instanceof Farm ? $farm->id : $farm)->value('manager_finance_access');
     }
 
     public static function can(string $role, string $capability): bool

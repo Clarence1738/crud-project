@@ -128,10 +128,9 @@ limited. All data routes require authentication.
 
 ## Farm application
 
-After login the app opens `/dashboard`. The sidebar provides **Dashboard**,
-**Farms**, **Crops**, **Livestock**, **Crop activities**, **Animal health**,
-**Fields**, **Inventory**, **Tasks**, **Equipment**, **Finance**, and
-**Documents**. On smaller screens the sidebar becomes a drawer.
+After login the app opens `/dashboard`. The sidebar groups the screens by
+area: Overview, Farm setup, Crops, Livestock, Resources, Finance, Information,
+and Administration. On smaller screens the sidebar becomes a drawer.
 
 Every screen works on one **active farm**, chosen from the farm picker. The
 choice is remembered in the browser across reloads, used only while the user is
@@ -139,7 +138,7 @@ still a member of that farm, and cleared on logout.
 
 | Screen | What it does |
 |---|---|
-| Dashboard | Active crop seasons, active livestock count, crop records, farm size, land utilization chart, livestock summary. Archived records are excluded. |
+| Dashboard | Active crop seasons, active livestock count, crop records, farm size, land utilization chart, livestock summary. Reminders for overdue tasks, health due, low stock, maintenance due, and this month's income and expenses (Owner). Archived records are excluded. |
 | Farms | Farm cards with the user's role, farm details (Owner edits), members, invitations, and joining another farm with a code. |
 | Crops | Crop seasons on a field: add, edit, archive, restore, show archived. Crop area cannot exceed the field size. |
 | Livestock | Individual animals (unique tag per farm) and groups or flocks: add, edit, archive, restore. |
@@ -149,6 +148,32 @@ still a member of that farm, and cleared on logout.
 | Tasks | Priority, due date, status, and an assignee chosen from farm members. |
 | Finance | KES income and expense records (Owner only). |
 | Documents | Account-private file upload, rename, replace, download, and delete. |
+
+### Further screens
+
+Every function in the specification (FMS-FS v1.0) is now saved through the API
+with the same farm membership and role checks as the screens above.
+
+| Screen | Route | Who can add | Notes |
+|---|---|---|---|
+| Harvests | /harvests | Owner, Manager | Adds the quantity to the crop season's harvested kg; editing adjusts it. |
+| Losses and incidents | /incidents | Owner, Manager | Pests, disease, weather, theft, with loss and action taken. |
+| Breeding, Births | /breeding, /births | Owner, Manager | Active animals of the farm only; expected birth after breeding date. |
+| Weight and production | /production | Any member | Milk, eggs, weight and wool measurements. |
+| Stock movements | /movements | Any member | Receipts, issues and transfers update the item balance; an issue cannot exceed stock. Adjustments need Owner or Manager and a reason. Movements cannot be edited. |
+| Suppliers, Stock locations | /suppliers, /locations | Owner, Manager | Names are unique per farm and used as choices on movements and harvests. |
+| Maintenance | /maintenance | Owner, Manager | Updates the equipment's next service date. |
+| Reports R1 to R7 | /reports | Owner, Manager | Charts and CSV export; R7 needs finance access. |
+| Audit history | /audit | Owner only (read) | Farm, crop, livestock, operations, membership and settings changes. |
+| Settings | /settings | Owner edits, members read | Reminder window for the dashboard, and finance access for Managers. |
+| System admin | /admin | System Administrators | Lists accounts; suspend or reactivate. Suspended accounts are signed out and cannot sign in. |
+| Functional coverage | /coverage | All | Maps every FS use case and report to its screen. |
+
+Give an account the System Administrator role from the `backend` folder:
+
+```powershell
+C:\xampp\php\php.exe -d extension=pdo_pgsql artisan farm:make-admin someone@example.com
+```
 
 ### Roles and collaboration
 
