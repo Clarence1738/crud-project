@@ -11,7 +11,7 @@ import { errorMessage } from './api.service';
   selector: 'app-root',
   imports: [FormsModule, RouterOutlet],
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrls: ['./app.css', './app-login.css'],
 })
 export class App {
   readonly auth = inject(AuthService);
@@ -24,19 +24,33 @@ export class App {
   readonly ready = signal(false);
   readonly busy = signal(false);
   readonly menuOpen = signal(false);
-  readonly sections = [
-    { label: 'Dashboard', icon: 'home', route: '/dashboard' },
-    { label: 'Farms', icon: 'home', route: '/farms' },
-    { label: 'Crops', icon: 'product', route: '/crops' },
-    { label: 'Livestock', icon: 'food', route: '/livestock' },
-    { label: 'Crop activities', icon: 'event', route: '/activities' },
-    { label: 'Animal health', icon: 'favorites', route: '/health' },
-    { label: 'Fields', icon: 'map', route: '/fields' },
-    { label: 'Inventory', icon: 'box', route: '/inventory' },
-    { label: 'Tasks', icon: 'checklist', route: '/tasks' },
-    { label: 'Equipment', icon: 'toolbox', route: '/equipment' },
-    { label: 'Finance', icon: 'money', route: '/finance' },
-    { label: 'Documents', icon: 'file', route: '/documents' },
+  readonly sections: { label: string; icon: string; route: string; group: string; adminOnly?: boolean }[] = [
+    { group: 'Overview', label: 'Dashboard', icon: 'home', route: '/dashboard' },
+    { group: 'Farm setup', label: 'Farms', icon: 'globe', route: '/farms' },
+    { group: 'Farm setup', label: 'Fields', icon: 'map', route: '/fields' },
+    { group: 'Crops', label: 'Crop seasons', icon: 'product', route: '/crops' },
+    { group: 'Crops', label: 'Crop activities', icon: 'event', route: '/activities' },
+    { group: 'Crops', label: 'Harvests', icon: 'box', route: '/harvests' },
+    { group: 'Crops', label: 'Losses and incidents', icon: 'warning', route: '/incidents' },
+    { group: 'Livestock', label: 'Livestock', icon: 'food', route: '/livestock' },
+    { group: 'Livestock', label: 'Animal health', icon: 'favorites', route: '/health' },
+    { group: 'Livestock', label: 'Breeding', icon: 'like', route: '/breeding' },
+    { group: 'Livestock', label: 'Births', icon: 'add', route: '/births' },
+    { group: 'Livestock', label: 'Production', icon: 'chart', route: '/production' },
+    { group: 'Resources', label: 'Inventory', icon: 'box', route: '/inventory' },
+    { group: 'Resources', label: 'Stock movements', icon: 'refresh', route: '/movements' },
+    { group: 'Resources', label: 'Suppliers', icon: 'group', route: '/suppliers' },
+    { group: 'Resources', label: 'Stock locations', icon: 'home', route: '/locations' },
+    { group: 'Resources', label: 'Tasks', icon: 'checklist', route: '/tasks' },
+    { group: 'Resources', label: 'Equipment', icon: 'toolbox', route: '/equipment' },
+    { group: 'Resources', label: 'Maintenance', icon: 'preferences', route: '/maintenance' },
+    { group: 'Finance', label: 'Finance', icon: 'money', route: '/finance' },
+    { group: 'Information', label: 'Reports', icon: 'chart', route: '/reports' },
+    { group: 'Information', label: 'Documents', icon: 'file', route: '/documents' },
+    { group: 'Administration', label: 'Audit history', icon: 'clock', route: '/audit' },
+    { group: 'Administration', label: 'Settings', icon: 'preferences', route: '/settings' },
+    { group: 'Administration', label: 'System admin', icon: 'user', route: '/admin', adminOnly: true },
+    { group: 'Administration', label: 'Functional coverage', icon: 'bulletlist', route: '/coverage' },
   ];
   private readonly router = inject(Router);
   private readonly farms = inject(FarmService);

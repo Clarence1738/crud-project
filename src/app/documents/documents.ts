@@ -6,13 +6,14 @@ import { DxPopupComponent } from 'devextreme-angular/ui/popup';
 
 import { DocumentRecord, DocumentService } from './document.service';
 import { errorMessage } from '../api.service';
+import { Skeleton } from '../skeleton';
 import { RecordRevisionsService } from '../record-revisions.service';
 
 @Component({
   selector: 'app-documents',
-  imports: [FormsModule, DxTemplateDirective, DxButtonComponent, DxPopupComponent],
+  imports: [Skeleton, FormsModule, DxTemplateDirective, DxButtonComponent, DxPopupComponent],
   templateUrl: './documents.html',
-  styleUrl: './documents.css',
+  styleUrls: ['./documents.css', '../farm-theme.css'],
 })
 export class Documents implements OnInit {
   readonly transportId = input<string>();

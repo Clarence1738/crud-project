@@ -91,3 +91,82 @@ select {
     margin-left: auto;
   }
 }
+
+/* ===== Farm Management design tokens ===== */
+:root {
+  --fm-primary: #166a4f;
+  --fm-primary-hover: #10563f;
+  --fm-primary-soft: #e8f3ee;
+  --fm-sidebar: #0f3a30;
+  --fm-bg: #f4f6f5;
+  --fm-surface: #ffffff;
+  --fm-surface-muted: #f8faf9;
+  --fm-border: #e2e8e5;
+  --fm-border-strong: #cfd9d4;
+  --fm-text: #1a2b25;
+  --fm-text-muted: #5f6f69;
+  --fm-text-subtle: #8a9893;
+  --fm-danger: #b4432f;
+  --fm-danger-soft: #fdf0ed;
+  --fm-warning: #a06a12;
+  --fm-warning-soft: #fdf5e6;
+  --fm-info: #2f6596;
+  --fm-info-soft: #eaf2fa;
+  --fm-radius-sm: 8px;
+  --fm-radius: 12px;
+  --fm-shadow-sm: 0 1px 2px rgba(16, 40, 32, 0.05);
+  --fm-shadow: 0 1px 3px rgba(16, 40, 32, 0.06), 0 6px 16px rgba(16, 40, 32, 0.05);
+  --fm-shadow-lg: 0 20px 48px rgba(10, 30, 24, 0.22);
+  --fm-focus: 0 0 0 3px rgba(22, 106, 79, 0.18);
+}
+html,
+body {
+  background: var(--fm-bg);
+}
+body {
+  color: var(--fm-text);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* DevExtreme data grids inside farm cards */
+.grid-card .dx-datagrid {
+  font-size: 13px;
+  color: var(--fm-text);
+}
+.grid-card .dx-datagrid-headers {
+  border-bottom: 1px solid var(--fm-border) !important;
+}
+.grid-card .dx-datagrid-headers .dx-header-row > td {
+  padding-block: 12px;
+  background: var(--fm-surface-muted);
+  color: var(--fm-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.grid-card .dx-datagrid .dx-datagrid-filter-row > td {
+  padding-block: 6px;
+  background: var(--fm-surface);
+}
+.grid-card .dx-datagrid .dx-datagrid-filter-row .dx-texteditor {
+  min-height: 0;
+}
+.grid-card .dx-datagrid-rowsview .dx-data-row > td {
+  padding-block: 11px;
+  border-bottom: 1px solid #eef2f0;
+  vertical-align: middle;
+}
+.grid-card .dx-datagrid-rowsview .dx-row-alt > td {
+  background: #fafcfb;
+}
+.grid-card .dx-datagrid-rowsview .dx-data-row:hover > td {
+  background: var(--fm-primary-soft);
+}
+.grid-card .dx-datagrid-pager {
+  border-top: 1px solid var(--fm-border);
+  padding: 10px 14px;
+}
+.grid-card .dx-datagrid-nodata {
+  color: var(--fm-text-subtle);
+}

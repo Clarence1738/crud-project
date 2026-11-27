@@ -27,6 +27,11 @@ class AuthController extends Controller
         if (! Auth::attempt($request->validated())) {
             throw ValidationException::withMessages(['email' => ['The credentials are incorrect.']]);
         }
+        if ($request->user()->suspended_at !== null) {
+            Auth::guard('web')->logout();
+            throw ValidationException::withMessages(['email' => ['This account has been suspended. Contact your administrator.']]);
+        }
+        $request->user()->forceFill(['last_login_at' => now()])->save();
 
         $request->session()->regenerate();
 

@@ -189,3 +189,31 @@
     text-align: left;
   }
 }
+
+.preview-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #fff1d9;
+  color: #8a5a12;
+  font-size: 10px;
+  letter-spacing: 0.6px;
+  vertical-align: middle;
+}
+.preview-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px dashed #e3c98f;
+  border-radius: 10px;
+  background: #fffaf0;
+  color: #6f5520;
+  font-size: 13px;
+}
+
+.member-table .skeleton-cell {
+  padding: 0;
+}

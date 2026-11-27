@@ -2,14 +2,15 @@ import { Component, computed, effect, inject, input, output, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 import { errorMessage } from './api.service';
 import { AuthService } from './auth.service';
+import { Skeleton } from './skeleton';
 import { Farm, farmCan, FarmInvitation, FarmMember, FarmRole, FarmService } from './farm.service';
 
 /** Farm members, roles, and invitation codes for the active farm. */
 @Component({
   selector: 'app-farm-members',
-  imports: [FormsModule],
+  imports: [Skeleton, FormsModule],
   templateUrl: './farm-members.html',
-  styleUrl: './farm-collab.css',
+  styleUrls: ['./farm-collab.css', './farm-theme.css'],
 })
 export class FarmMembers {
   private readonly service = inject(FarmService);
@@ -21,6 +22,7 @@ export class FarmMembers {
   readonly invitations = signal<FarmInvitation[]>([]);
   readonly issued = signal<FarmInvitation | null>(null);
   readonly busy = signal(false);
+  readonly loading = signal(true);
   readonly error = signal('');
   readonly notice = signal('');
   readonly isOwner = computed(() => farmCan.manageFarm(this.farm().role));
@@ -39,6 +41,8 @@ export class FarmMembers {
   }
 
   private async load(farm: Farm): Promise<void> {
+    this.loading.set(true);
+    this.members.set([]);
     await this.run(async () => {
       const [members, invitations] = await Promise.all([
         this.service.members(farm.id),
@@ -47,6 +51,7 @@ export class FarmMembers {
       this.members.set(members);
       this.invitations.set(invitations);
     });
+    this.loading.set(false);
   }
 
   async invite(): Promise<void> {

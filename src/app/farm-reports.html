@@ -1,0 +1,135 @@
+<section class="module-page">
+  <header class="module-head">
+    <div>
+      <h1>Reports</h1>
+      <p>Run the farm reports, check the totals and export the same rows to CSV.</p>
+    </div>
+    <div class="module-actions">
+      <label
+        >Active farm<select [ngModel]="farm()?.id || ''" (ngModelChange)="selectFarm($event)">
+          @for (item of farms(); track item.id) {
+            <option [value]="item.id">{{ item.name }} · {{ item.role }}</option>
+          }
+        </select></label
+      >
+      @if (canRun()) {
+        <button
+          class="primary"
+          type="button"
+          (click)="exportCsv()"
+          [disabled]="!result()?.rows?.length"
+        >
+          Export CSV
+        </button>
+      }
+    </div>
+  </header>
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+  @if (!farm() && busy()) {
+    <app-skeleton variant="report" [columns]="7" label="Loading reports…" />
+  } @else if (farm() && !canRun()) {
+    <section class="grid-card access-note">
+      <h2>Owner and Manager access</h2>
+      <p>
+        Your role on {{ farm()?.name }} is {{ role() }}. Reports are available to Owners and
+        Managers.
+      </p>
+    </section>
+  } @else if (farm()) {
+    <nav class="report-tabs" aria-label="Reports">
+      @for (report of available(); track report.id) {
+        <button
+          type="button"
+          [class.active]="selected() === report.id"
+          (click)="selected.set(report.id)"
+        >
+          {{ report.id }} {{ report.title }}
+        </button>
+      }
+    </nav>
+    <div class="report-head">
+      <div>
+        <h2>{{ info().id }} {{ info().title }}</h2>
+        <p>{{ info().description }}</p>
+      </div>
+      <div class="module-actions">
+        <label
+          >From<input type="date" [ngModel]="from()" (ngModelChange)="from.set($event)"
+        /></label>
+        <label>To<input type="date" [ngModel]="to()" (ngModelChange)="to.set($event)" /></label>
+        <label
+          >Due within (days)<input
+            type="number"
+            min="1"
+            max="365"
+            [ngModel]="dueWithin()"
+            (ngModelChange)="dueWithin.set(+$event || 7)"
+        /></label>
+      </div>
+    </div>
+    @if (busy() && !data()) {
+      <app-skeleton variant="report" [columns]="7" label="Loading reports…" />
+    } @else if (result(); as r) {
+      <div class="report-summary">
+        @for (item of r.summary; track item.label) {
+          <article>
+            <span>{{ item.label }}</span><strong>{{ item.value }}</strong>
+          </article>
+        }
+      </div>
+      @if (r.chart; as chart) {
+        @for (id of [selected()]; track id) {
+          @if (chart.data.length) {
+            <section class="report-chart">
+              <h2>{{ chart.title }}</h2>
+              @if (chart.kind === 'pie') {
+                <dx-pie-chart
+                  [dataSource]="chart.data"
+                  type="doughnut"
+                  [palette]="['#3f7d4c', '#d8a33f', '#8b6f47', '#bf563f', '#346c9e', '#a7b8b0']"
+                  [series]="[
+                    {
+                      argumentField: 'label',
+                      valueField: 'value',
+                      label: { visible: true, connector: { visible: true } },
+                    },
+                  ]"
+                  [legend]="{ horizontalAlignment: 'right', verticalAlignment: 'top' }"
+                  [size]="{ height: 280 }"
+                ></dx-pie-chart>
+              } @else {
+                <dx-chart
+                  [dataSource]="chart.data"
+                  [commonSeriesSettings]="{ argumentField: 'label', type: 'bar', barPadding: 0.25 }"
+                  [series]="barSeries()"
+                  [legend]="{ verticalAlignment: 'bottom', horizontalAlignment: 'center' }"
+                  [argumentAxis]="{ label: { overlappingBehavior: 'rotate', rotationAngle: -30 } }"
+                  [size]="{ height: 300 }"
+                ></dx-chart>
+              }
+            </section>
+          }
+        }
+      }
+      @for (id of [selected()]; track id) {
+        <section class="grid-card">
+          <dx-data-grid
+            [dataSource]="r.rows"
+            [rowAlternationEnabled]="true"
+            [columnAutoWidth]="true"
+            [filterRow]="{ visible: true }"
+            [headerFilter]="{ visible: true }"
+            [showBorders]="false"
+            noDataText="No records match these filters."
+          >
+            @for (column of r.columns; track column.key) {
+              <dxi-data-grid-column [dataField]="column.key" [caption]="column.label" />
+            }
+          </dx-data-grid>
+        </section>
+      }
+    }
+  }
+</section>

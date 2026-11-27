@@ -6,6 +6,7 @@ interface User {
   id: number;
   name: string;
   email: string;
+  is_admin?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -14,6 +15,8 @@ export class AuthService {
   private readonly currentUser = signal<User | null>(null);
   readonly user = computed(() => (this.api.expired() ? null : (this.currentUser()?.email ?? null)));
   readonly userId = computed(() => (this.api.expired() ? null : (this.currentUser()?.id ?? null)));
+  /** System Administrators manage accounts; the API enforces this too. */
+  readonly isAdmin = computed(() => !this.api.expired() && !!this.currentUser()?.is_admin);
 
   async restore(): Promise<void> {
     await this.api.csrf();

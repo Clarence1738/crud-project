@@ -25,6 +25,13 @@
       </tr>
     </thead>
     <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="4" class="skeleton-cell">
+            <app-skeleton variant="lines" [columns]="4" [count]="3" label="Loading members…" />
+          </td>
+        </tr>
+      }
       @for (member of members(); track member.id) {
         <tr>
           <td>
